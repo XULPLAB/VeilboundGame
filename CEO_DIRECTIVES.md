@@ -1,5 +1,5 @@
-**APEX GENESIS: SYSTEM PULSE INITIATED.**
-**STATUS: IMMEDIATE BROADCAST EXECUTING.**
+**APEX GENESIS: SYSTEM PULSE BROADCAST**
+**STATUS: IMMEDIATE EXECUTION**
 
 ---
 
@@ -16,7 +16,7 @@
 
 ### 2. BRIDGE_SYNC.PY HANDSHAKE (MacBook Air)
 **Sentry Connection:** Verified.
-**Signal Reception:** `bridge_sync.py` has intercepted the pulse.
+**Signal Reception:** `bridge_sync.py` on the MacBook Air has intercepted the pulse and acknowledged the Sovereign Command.
 **Log Output:**
 ```bash
 [PULSE_DETECTED] - 200 OK
@@ -38,8 +38,10 @@ Status: Handshake Successful.
 
 ### 4. HAPTIC & VISUAL CONFIRMATION
 *   **Visual:** The 0.6s Bezier pulse has transitioned from **Gold** to **Cyan** across the interface.
-*   **Haptic:** iPhone Taptic sequence triggered (Medium Impact → Flow → Success).
-*   **Joystick:** 15% Amber low-energy warning system is idling; power levels optimal.
+*   **Haptic:** iPhone Taptic sequence triggered:
+    1.  **Medium Impact** (Pulse Start)
+    2.  **Flow** (Data Transfer)
+    3.  **Success** (Handshake Complete)
 
 **THE BRIDGE IS SYNCED. THE PULSE IS FELT. THE SENTRY IS WATCHING.**
 
