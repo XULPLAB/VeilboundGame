@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://tower1"]
+
+[node name="RunicTower" type="Node3D"]
+
+[node name="BaseMesh" type="CSGCylinder3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+radius = 2.0
+height = 4.0
+cone = true
+
+[node name="SkyBeam" type="CSGCylinder3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 50, 0)
+radius = 0.5
+height = 100.0
+
+[node name="InteractionRadius" type="Area3D" parent="."]
+
+[node name="CollisionShape" type="CollisionShape3D" parent="InteractionRadius"]
+# APEX GENESIS: 30-45m Interaction Logic
