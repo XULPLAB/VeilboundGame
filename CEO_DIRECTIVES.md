@@ -38,3 +38,9 @@ Activate the 24/7 reporting rhythm. Send a comprehensive Telegram ping via Cloud
 ## 7. REPOSITORY SYNC
 - **Mechanism:** Utilize SHA-Scout for master-write operations.
 - **Execution:** ALL ACTIONS MUST TAKE EFFECT INSTANTLY UPON 200 OK.
+## 8. 3D PRODUCTION PIPELINE (ARTISAN)
+- **Trigger:** Image submission via Telegram.
+- **Generation:** Utilize Image-to-3D API for low-poly (.glb) output.
+- **Aesthetic Sync:** Apply 'Dark-Mode Neon' texture overrides.
+- **Approval Flow:** Require 'Approve' click via Telegram before final commit.
+- **Deployment:** Store binary meshes in Firebase; commit metadata to /assets/creatures/registry.json.
