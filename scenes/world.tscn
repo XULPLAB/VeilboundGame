@@ -1,4 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://world1"]
+[gd_scene load_steps=3 format=3 uid="uid://world1"]
+
+[ext_resource type="Script" path="res://scripts/virtual_joystick.gd" id="1_js"]
 
 [node name="World" type="Node3D"]
 
@@ -17,7 +19,8 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -150.0
-offset_top = -150.0
+offset_left = -250.0
+offset_top = -250.0
 grow_horizontal = 0
 grow_vertical = 0
+script = ExtResource("1_js")
