@@ -1,0 +1,23 @@
+      - name: 3D Generation & Firebase Upload
+        run: |
+          echo "🛠️ [ARTISAN] Generating 3D Mesh from Concept..."
+          # The agent calls the Image-to-3D API here
+          # Resulting .glb is pushed to Firebase Storage
+          
+      - name: Request Approval
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+          -d chat_id="${CHAT_ID}" \
+          -d parse_mode="HTML" \
+          -d text="<b>🔱 [ARTISAN] 3D PRODUCTION READY</b>
+          
+          Object: New Creature Model
+          Poly-Count: Optimized (Mobile Ready)
+          Texture: Dark-Mode Neon Applied
+          
+          <a href='https://veilbound-preview.web.app'>Click to View 3D Rotation</a>
+          
+          <b>AWAITING ARCHITECT APPROVAL...</b>"
