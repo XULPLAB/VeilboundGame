@@ -10,6 +10,9 @@ on:
     - cron: '0 1 * * *'   # 9:00 PM EST (Night Update)
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   apex_genesis:
     runs-on: ubuntu-latest
@@ -22,17 +25,16 @@ jobs:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          # Get the last commit message to include in the report
-          MSG=$(git log -1 --pretty=%B)
+          MSG=$(git log -1 --pretty=%B || echo "Manual Trigger")
           
           curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
           -d chat_id="${CHAT_ID}" \
           -d parse_mode="HTML" \
           -d text="<b>🔱 MASTER CEO: APEX GENESIS ACTIVE</b>
           
-          <b>[REPORTING RHYTHM]</b>
-          Status: 24/7 Global Grid Synchronized
-          Updates: 09:00 / 13:00 / 21:00 EST
+          <b>[SYSTEM STATUS]</b>
+          Engine: Node.js 24 (Optimized)
+          Rhythm: 09:00 / 13:00 / 21:00 EST
           
           <b>[WORLD ARCHITECTURE]</b>
           - Incursions: Order of Qwen 'Gold Q' Logic Active
