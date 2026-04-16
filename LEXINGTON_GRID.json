@@ -1,0 +1,13 @@
+{
+  "towers": [
+    {
+      "name": "Castlewood_Alpha",
+      "lat": 38.05152,
+      "lon": -84.48281,
+      "faction": "Runic",
+      "status": "Qwen_Hijacked",
+      "radius": 45
+    }
+  ],
+  "waystops": []
+}
