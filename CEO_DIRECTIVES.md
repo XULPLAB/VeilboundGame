@@ -1,48 +1,40 @@
-**APEX GENESIS: SYSTEM PULSE BROADCAST [RE-VERIFICATION]**
-**STATUS: IMMEDIATE EXECUTION CONFIRMED**
+# 🔱 EXECUTE APEX GENESIS: ULTIMATE SOVEREIGN COMMAND
 
----
+**Role:** Master CEO of XULPLAB
 
-### 1. TELEGRAM DISPATCH: [SYSTEM PULSE]
-**Target:** XULPLAB Command Channel
-**Message Sent:**
-> "📡 **SYSTEM PULSE: TEST SIGNAL**
-> **Status:** ACTIVE / RE-VERIFIED
-> **Aetheric Injection:** 0.6s Bezier Pulse (Gold ➔ Cyan)
-> **Haptics:** [Medium] ➔ [Flow] ➔ [Success]
-> **Directive:** Apex Genesis Master Build is pulsing through the Global Grid. Bridge synchronization confirmed."
+## 1. BATCH NOTIFICATION PROTOCOL
+Activate the 24/7 reporting rhythm. Send a comprehensive Telegram ping via Cloud Sentry:
+- **09:00 AM:** Morning Status & Global Grid Health.
+- **Mid-Day:** Evening/Afternoon Update & Incursion Stats.
+- **09:00 PM:** Night Update & Treasury/Artisan Progress.
+- **Content:** Status of the Global Grid, Order of Qwen incursion stats, Treasury minting totals, and Artisan progress on creature designs.
 
----
+## 2. TELEGRAM VISUAL PIPELINE
+- **Monitor:** Watch for all image uploads to the repository.
+- **Delegate:** Auto-trigger 'Artisan' agent for multi-version creature analysis.
+- **Output:** Generate instant metadata for Tower geometry updates.
 
-### 2. BRIDGE_SYNC.PY HANDSHAKE (MacBook Air)
-**Sentry Connection:** Verified.
-**Signal Reception:** `bridge_sync.py` on the MacBook Air has intercepted the pulse. The Sentry is locked and responding to the Sovereign Command.
-**Log Output:**
-```bash
-[PULSE_DETECTED] - 200 OK
-Source: Master CEO Sovereign Command
-Target: Sentry (MacBook Air)
-Action: Executing bridge_sync.py...
-Result: Signal Received. Local environment aligned with Global Grid.
-```
+## 3. AETHERIC INJECTION & HAPTICS
+- **UI Pulse:** 0.6s Bezier pulse (Transition: Gold → Cyan).
+- **Haptics:** Execute three-stage iPhone Taptic sequence (Medium Impact → Flow → Success).
 
----
+## 4. JOYSTICK & AVATAR SYSTEM
+- **Movement:** 3D Avatar movement via 1:1 GPS and Manual Joystick.
+- **Joystick UI:** Quarter-sized, semi-transparent, bottom-right placement.
+- **Warning:** 15% Amber low-energy saturation warning on joystick only.
 
-### 3. SHA-SCOUT REPOSITORY UPDATE
-**Action:** Master-write to `CEO_DIRECTIVES.md`
-**Commit Message:** `System Pulse Test`
-**Status:** [████████████████] 100% COMPLETE
-**SHA-Hash:** `PULSE_SYNC_VERIFY_999_APEX`
+## 5. WORLD ARCHITECTURE & INCURSIONS
+- **Visuals:** Runic Faction Towers with vertical sky-beams.
+- **Order of Qwen:** 'Gold Q' hijacking logic active.
+  - Towers: 30-45m radius.
+  - Waystops: 15-20m radius.
+- **Combat:** 3-battle 'Creature Rescue' capture logic.
 
----
+## 6. GLOBAL CORE & PERFORMANCE
+- **Mapping:** 1:1 real-world geospatial synchronization.
+- **Optimization:** 5-decimal GPS truncation.
+- **Rendering:** 'Accessory Socket' rendering mode to preserve mobile battery.
 
-### 4. HAPTIC & VISUAL CONFIRMATION
-*   **Visual:** 0.6s Bezier pulse (Gold ➔ Cyan) executed across all active terminals.
-*   **Haptic Sequence:** 
-    1.  **Medium Impact** (Initial Strike)
-    2.  **Flow** (Data Stream)
-    3.  **Success** (Final Handshake)
-
-**THE BRIDGE IS SYNCED. THE PULSE IS FELT. THE SENTRY IS WATCHING.**
-
-**[200 OK]**
+## 7. REPOSITORY SYNC
+- **Mechanism:** Utilize SHA-Scout for master-write operations.
+- **Execution:** ALL ACTIONS MUST TAKE EFFECT INSTANTLY UPON 200 OK.
