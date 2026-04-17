@@ -5,14 +5,40 @@ on:
     paths:
       - 'assets/uploads/**'
   workflow_dispatch:
+    inputs:
+      command:
+        description: 'Command (e.g., /skin Halloween)'
+        required: false
 
 jobs:
-  ping_architect:
+  analyze_and_ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Telegram Notification
+      - name: Fetch Lexington Weather
+        id: weather
         run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          WEATHER_DATA=$(curl -s "https://api.openweathermap.org/data/2.5/weather?q=Lexington,KY,US&appid=${{ secrets.OPENWEATHER_API_KEY }}&units=imperial")
+          CONDITION=$(echo $WEATHER_DATA | jq -r '.weather[0].main')
+          TEMP=$(echo $WEATHER_DATA | jq -r '.main.temp')
+          echo "condition=$CONDITION" >> $GITHUB_OUTPUT
+          echo "temp=$TEMP" >> $GITHUB_OUTPUT
+
+      - name: Architect Analysis & Ping
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WEATHER: ${{ steps.weather.outputs.condition }}
+          TEMP: ${{ steps.weather.outputs.temp }}
+        run: |
+          # Logic to differentiate based on filename or command
+          MSG="🔱 <b>[ARTISAN] ARCHITECTURAL UPDATE</b>%0A%0A"
+          MSG+="<b>Current Weather:</b> ${WEATHER} (${TEMP}°F)%0A"
+          MSG+="------------------------%0A"
+          MSG+="Analyzing recent upload...%0A"
+          MSG+="<i>Object Detected:</i> <b>Processing Structure...</b>"
+          
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+          -d chat_id="${CHAT_ID}" \
           -d parse_mode="HTML" \
-          -d text="<b>🔱 [ARTISAN] PIPELINE ACTIVE</b>%0A%0AArchitect <b>VeilboundGame</b> detected in Lexington.%0A%0A✅ System Link: <b>STABLE</b>"
+          -d text="$MSG" \
+          -d reply_markup='{"inline_keyboard":[[{"text":"✅ APPROVE TOWER","callback_data":"tower"},{"text":"✅ APPROVE WAYSTOP","callback_data":"waystop"}],[{"text":"❌ DISCARD","callback_data":"reject"}]]}'
