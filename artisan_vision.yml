@@ -1,4 +1,13 @@
-      - name: 3D Generation & Firebase Upload
+      name: Artisan Visual Pipeline
+on:
+  push:
+    paths:
+      - 'assets/uploads/**'
+      - '**.jpeg'
+      - '**.jpg'
+      - '**.png'
+  workflow_dispatch: # This adds a manual "RUN" button
+- name: 3D Generation & Firebase Upload
         run: |
           echo "🛠️ [ARTISAN] Generating 3D Mesh from Concept..."
           # The agent calls the Image-to-3D API here
