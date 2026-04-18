@@ -1,44 +1,59 @@
-name: Artisan Visual Pipeline
-
+name: Artisan Vision Slicer & OCR
 on:
-  push:
-    paths:
-      - 'assets/uploads/**'
   workflow_dispatch:
     inputs:
-      command:
-        description: 'Command (e.g., /skin Halloween)'
-        required: false
+      telegram_file_id:
+        description: 'Telegram File ID'
+        required: true
 
 jobs:
-  analyze_and_ping:
+  process_and_slice:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
       - name: Fetch Lexington Weather
         id: weather
         run: |
-          WEATHER_DATA=$(curl -s "https://api.openweathermap.org/data/2.5/weather?q=Lexington,KY,US&appid=${{ secrets.OPENWEATHER_API_KEY }}&units=imperial")
-          CONDITION=$(echo $WEATHER_DATA | jq -r '.weather[0].main')
-          TEMP=$(echo $WEATHER_DATA | jq -r '.main.temp')
-          echo "condition=$CONDITION" >> $GITHUB_OUTPUT
-          echo "temp=$TEMP" >> $GITHUB_OUTPUT
+          # Fetching real-time weather for Lexington
+          DATA=$(curl -s "https://api.openweathermap.org/data/2.5/weather?q=Lexington,KY,US&appid=${{ secrets.OPENWEATHER_API_KEY }}&units=imperial")
+          CONDITION=$(echo $DATA | jq -r '.weather[0].main')
+          echo "current_weather=$CONDITION" >> $GITHUB_OUTPUT
 
-      - name: Architect Analysis & Ping
+      - name: Grab Photo from Telegram
+        run: |
+          FILE_PATH=$(curl -s "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/getFile?file_id=${{ github.event.inputs.telegram_file_id }}" | jq -r '.result.file_path')
+          curl -s "https://api.telegram.org/file/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/$FILE_PATH" -o assets/uploads/artisan_input.png
+
+      - name: OCR & Magical Classification
+        id: artisan
+        run: |
+          sudo apt-get update && sudo apt-get install -y tesseract-ocr imagemagick
+          SCAN_RESULT=$(tesseract assets/uploads/artisan_input.png stdout)
+          
+          if echo "$SCAN_RESULT" | grep -Ei "Berry|Rasp|Plum|Fig"; then TYPE="Aetheric_Berry";
+          elif echo "$SCAN_RESULT" | grep -Ei "Prism|Vessel"; then TYPE="Aetheric_Prism";
+          else TYPE="Magical_Medallion"; fi
+          
+          echo "detected_type=$TYPE" >> $GITHUB_OUTPUT
+
+      - name: Send Review to Architect
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          WEATHER: ${{ steps.weather.outputs.condition }}
-          TEMP: ${{ steps.weather.outputs.temp }}
         run: |
-          # Logic to differentiate based on filename or command
-          MSG="🔱 <b>[ARTISAN] ARCHITECTURAL UPDATE</b>%0A%0A"
-          MSG+="<b>Current Weather:</b> ${WEATHER} (${TEMP}°F)%0A"
+          MSG="🔱 <b>[VISION SCAN COMPLETE]</b>%0A"
           MSG+="------------------------%0A"
-          MSG+="Analyzing recent upload...%0A"
-          MSG+="<i>Object Detected:</i> <b>Processing Structure...</b>"
-          
-          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-          -d chat_id="${CHAT_ID}" \
-          -d parse_mode="HTML" \
-          -d text="$MSG" \
-          -d reply_markup='{"inline_keyboard":[[{"text":"✅ APPROVE TOWER","callback_data":"tower"},{"text":"✅ APPROVE WAYSTOP","callback_data":"waystop"}],[{"text":"❌ DISCARD","callback_data":"reject"}]]}'
+          MSG+="<b>Object:</b> ${{ steps.artisan.outputs.detected_type }}%0A"
+          MSG+="<b>Lexington Weather:</b> ${{ steps.weather.outputs.current_weather }}%0A"
+          MSG+="<b>Logic:</b> Aether Tap + Shatter-Sync%0A"
+          MSG+="------------------------%0A"
+          MSG+="<i>Manifest this into the High Magical Fantasy Grimoire?</i>"
+
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto" \
+          -F chat_id="${CHAT_ID}" \
+          -F photo="@assets/uploads/artisan_input.png" \
+          -F caption="$MSG" \
+          -F parse_mode="HTML" \
+          -F reply_markup='{"inline_keyboard":[[{"text":"✅ MANIFEST","callback_data":"push"}]]}'
