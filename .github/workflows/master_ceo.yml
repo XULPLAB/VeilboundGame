@@ -25,37 +25,41 @@ jobs:
       - name: Architect Verification
         run: |
           if [ "${{ github.event.client_payload.chat_id }}" != "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
-            echo "Access Denied."
+            echo "Access Denied: Architect ID Mismatch."
             exit 1
           fi
 
-      - name: Execute Sovereign Core
+      - name: Setup & Execute Agents
         env:
           CMD_TEXT: ${{ github.event.client_payload.text }}
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           ARCHITECT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
+          # 1. Install necessary communication libraries
+          pip install requests
+          
+          # 2. Run Sentinel to process commands and update the local ledger files
           python3 agents/sentinel.py "$CMD_TEXT"
-          python3 agents/envoy.py
+          
+          # 3. Run Envoy to report back to the Architect on Telegram
+          python3 agents/envoy.py "🔱 XULPLAB STATUS: Grid Synchronized. World Build #$GITHUB_RUN_NUMBER is active. Ready to drop Castlewood Tower."
 
       - name: Commit & World Push
         env:
           MY_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          # 1. THE MANUAL OVERRIDE: 
-          # This forces Git to use your token for EVERY request to github.com
-          git config --global url."https://x-access-token:${MY_TOKEN}@github.com/".insteadOf "https://github.com/"
-          
-          # 2. Identity Setup
+          # Identity Setup
           git config --global user.name "Master CEO"
           git config --global user.email "ceo@xulplabs.com"
           
-          # 3. Stage and Push
+          # Stage changes (Sentinel/Envoy may have modified the Ledger or JSONs)
           git add .
+          
+          # Only push if changes exist (prevents failure on empty runs)
           if ! git diff-index --quiet HEAD; then
             git commit -m "APEX GENESIS: World Build Update & Ledger Synchronization"
-            # We use 'origin main' explicitly to avoid any ambiguity
-            git push origin main
+            # The Brute Force URL fix to bypass the Exit 128 "Username" prompt
+            git push "https://x-access-token:${MY_TOKEN}@github.com/${{ github.repository }}.git" HEAD:main
           else
-            echo "No changes detected. Standing by."
+            echo "No changes to commit. Infrastructure is stable."
           fi
