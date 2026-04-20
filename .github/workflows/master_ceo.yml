@@ -1,8 +1,7 @@
 name: XULPLAB Master CEO - APEX GENESIS
 
-# 1. PERMISSIONS: Granting the CEO the "Sovereign Pen"
 permissions:
-  contents: write  # Crucial: Allows the CEO to write to CEO_DIRECTIVES.md
+  contents: write
   actions: read
 
 on:
@@ -19,12 +18,11 @@ jobs:
       - name: Checkout Sovereignty
         uses: actions/checkout@v4
         with:
-          # Use your PAT instead of the default GITHUB_TOKEN for "Write" access
-          token: ${{ secrets.GH_PAT }} 
+          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0
 
       - name: Architect Verification
         run: |
-          # Security Check: Ensure the signal is from your Chat ID
           if [ "${{ github.event.client_payload.chat_id }}" != "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
             echo "Access Denied: Guardian Protocol Active."
             exit 1
@@ -36,20 +34,27 @@ jobs:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           ARCHITECT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          # Run the agents
-          python3 agents/sovereign_core.py "$CMD_TEXT"
+          # Pass the command to the agents
+          python3 agents/sentinel.py "$CMD_TEXT"
           python3 agents/envoy.py
 
-      - name: Commit to Ledger (CEO_DIRECTIVES.md)
+      - name: Commit to Ledger & World Push
+        env:
+          PAT: ${{ secrets.GH_PAT }}
         run: |
           git config --global user.name "Master CEO"
           git config --global user.email "ceo@xulplabs.com"
           
-          # Only commit if the ledger was actually changed by the scripts
-          if [[ -n $(git status -s CEO_DIRECTIVES.md) ]]; then
-            git add CEO_DIRECTIVES.md
-            git commit -m "APEX GENESIS: Ledger Updated via Master Architect Command"
-            git push
+          # Stage all changes (Ledger updates, Grid changes, etc.)
+          git add .
+          
+          # Only commit if there are actual changes to avoid "Nothing to commit" errors
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "APEX GENESIS: World Build Update & Ledger Synchronization"
+            
+            # The Fix: Authenticate the push using the PAT in the URL
+            git remote set-url origin https://x-access-token:${PAT}@github.com/${{ github.repository }}.git
+            git push origin main
           else
-            echo "No ledger changes detected."
+            echo "No changes detected in World Grid or Ledger."
           fi
