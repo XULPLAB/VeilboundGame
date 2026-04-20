@@ -1,0 +1,29 @@
+name: XULPLAB Master CEO
+on:
+  schedule:
+    - cron: '0 13 * * *' # 9:00 AM Update
+    - cron: '0 1 * * *'  # 9:00 PM Update
+  repository_dispatch:
+    types: [telegram_cmd]
+
+jobs:
+  apex_genesis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Verify Architect
+        run: |
+          if [ "${{ github.event.client_payload.chat_id }}" != "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+            echo "Access Denied."
+            exit 1
+          fi
+
+      - name: Run Sovereign Logic
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python3 agents/sovereign_core.py "${{ github.event.client_payload.text }}"
+          python3 agents/envoy.py
