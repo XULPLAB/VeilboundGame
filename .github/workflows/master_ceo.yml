@@ -1,4 +1,10 @@
-name: XULPLAB Master CEO
+name: XULPLAB Master CEO - APEX GENESIS
+
+# 1. PERMISSIONS: Granting the CEO the "Sovereign Pen"
+permissions:
+  contents: write  # Crucial: Allows the CEO to write to CEO_DIRECTIVES.md
+  actions: read
+
 on:
   schedule:
     - cron: '0 13 * * *' # 9:00 AM Update
@@ -7,23 +13,43 @@ on:
     types: [telegram_cmd]
 
 jobs:
-  apex_genesis:
+  apex_operation:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repo
+      - name: Checkout Sovereignty
         uses: actions/checkout@v4
+        with:
+          # Use your PAT instead of the default GITHUB_TOKEN for "Write" access
+          token: ${{ secrets.GH_PAT }} 
 
-      - name: Verify Architect
+      - name: Architect Verification
         run: |
+          # Security Check: Ensure the signal is from your Chat ID
           if [ "${{ github.event.client_payload.chat_id }}" != "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
-            echo "Access Denied."
+            echo "Access Denied: Guardian Protocol Active."
             exit 1
           fi
 
-      - name: Run Sovereign Logic
+      - name: Execute Sovereign Core
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          CMD_TEXT: ${{ github.event.client_payload.text }}
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          ARCHITECT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          python3 agents/sovereign_core.py "${{ github.event.client_payload.text }}"
+          # Run the agents
+          python3 agents/sovereign_core.py "$CMD_TEXT"
           python3 agents/envoy.py
+
+      - name: Commit to Ledger (CEO_DIRECTIVES.md)
+        run: |
+          git config --global user.name "Master CEO"
+          git config --global user.email "ceo@xulplabs.com"
+          
+          # Only commit if the ledger was actually changed by the scripts
+          if [[ -n $(git status -s CEO_DIRECTIVES.md) ]]; then
+            git add CEO_DIRECTIVES.md
+            git commit -m "APEX GENESIS: Ledger Updated via Master Architect Command"
+            git push
+          else
+            echo "No ledger changes detected."
+          fi
