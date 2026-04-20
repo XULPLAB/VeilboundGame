@@ -20,6 +20,8 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           fetch-depth: 0
+          # This is the secret fix: Disables the locked-in local credentials
+          persist-credentials: false 
 
       - name: Architect Verification
         run: |
@@ -34,22 +36,27 @@ jobs:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           ARCHITECT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
+          # These scripts update your files (Ledger/Grid)
           python3 agents/sentinel.py "$CMD_TEXT"
           python3 agents/envoy.py
 
       - name: Commit & World Push
-        # THE FIX: This environment block forces Git to use the internal token
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use your Master Key for this step
+          MY_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           git config --global user.name "Master CEO"
           git config --global user.email "ceo@xulplabs.com"
           
           git add .
+          
+          # Only push if changes exist
           if ! git diff-index --quiet HEAD; then
             git commit -m "APEX GENESIS: World Build Update & Ledger Synchronization"
-            # We don't need a URL here because GITHUB_TOKEN is now in the environment
-            git push
+            
+            # THE BRUTE FORCE FIX:
+            # We push directly to the authenticated URL, bypassing the 'origin' memory
+            git push "https://x-access-token:${MY_TOKEN}@github.com/${{ github.repository }}.git" HEAD:main
           else
-            echo "No changes detected."
+            echo "No changes detected. Grid stable."
           fi
