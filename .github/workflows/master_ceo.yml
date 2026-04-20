@@ -18,8 +18,8 @@ jobs:
       - name: Checkout Sovereignty
         uses: actions/checkout@v4
         with:
+          # Use your PAT for the initial checkout
           token: ${{ secrets.GH_PAT }}
-          persist-credentials: false # We will handle credentials manually below
           fetch-depth: 0
 
       - name: Architect Verification
@@ -35,20 +35,19 @@ jobs:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           ARCHITECT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
+          # Ensure these files exist to avoid 'file not found' errors
           python3 agents/sentinel.py "$CMD_TEXT"
           python3 agents/envoy.py
 
       - name: Commit & World Push
-        env:
-          PAT: ${{ secrets.GH_PAT }}
         run: |
           # 1. Identity Setup
           git config --global user.name "Master CEO"
           git config --global user.email "ceo@xulplabs.com"
           
-          # 2. THE CLEAN SLATE: Remove the old origin and add the authenticated one
-          git remote remove origin
-          git remote add origin "https://x-access-token:${PAT}@github.com/${{ github.repository }}.git"
+          # 2. THE DUAL-KEY FIX: Use the automatic GITHUB_TOKEN for the push
+          # This avoids the "Username" prompt because it's an internal system token
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           
           # 3. Stage and Push
           git add .
