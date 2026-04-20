@@ -1,3 +1,9 @@
+# XULPLAB CEO DIRECTIVES
+## APEX GENESIS: GLOBAL SOVEREIGN COMMAND
+- Status: Global World Push Active
+- Security: Guardian Protocol (Anti-Spoofing Level 4)
+- Grid: Global S2 Cell Hierarchy (Level 13 for Towers / Level 15 for Berries)
+- Performance: 5-Decimal Truncation (Battery Optimized)
 # 🔱 EXECUTE APEX GENESIS: ULTIMATE SOVEREIGN COMMAND
 
 **Role:** Master CEO of XULPLAB
