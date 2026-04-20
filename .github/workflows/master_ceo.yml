@@ -18,14 +18,13 @@ jobs:
       - name: Checkout Sovereignty
         uses: actions/checkout@v4
         with:
-          # Use your PAT for the initial checkout
           token: ${{ secrets.GH_PAT }}
           fetch-depth: 0
 
       - name: Architect Verification
         run: |
           if [ "${{ github.event.client_payload.chat_id }}" != "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
-            echo "Access Denied: Guardian Protocol Active."
+            echo "Access Denied."
             exit 1
           fi
 
@@ -35,25 +34,22 @@ jobs:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           ARCHITECT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          # Ensure these files exist to avoid 'file not found' errors
           python3 agents/sentinel.py "$CMD_TEXT"
           python3 agents/envoy.py
 
       - name: Commit & World Push
+        # THE FIX: This environment block forces Git to use the internal token
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 1. Identity Setup
           git config --global user.name "Master CEO"
           git config --global user.email "ceo@xulplabs.com"
           
-          # 2. THE DUAL-KEY FIX: Use the automatic GITHUB_TOKEN for the push
-          # This avoids the "Username" prompt because it's an internal system token
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          
-          # 3. Stage and Push
           git add .
           if ! git diff-index --quiet HEAD; then
             git commit -m "APEX GENESIS: World Build Update & Ledger Synchronization"
-            git push origin main
+            # We don't need a URL here because GITHUB_TOKEN is now in the environment
+            git push
           else
-            echo "No changes detected. Standing by."
+            echo "No changes detected."
           fi
