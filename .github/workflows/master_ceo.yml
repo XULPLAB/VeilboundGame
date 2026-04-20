@@ -6,8 +6,8 @@ permissions:
 
 on:
   schedule:
-    - cron: '0 13 * * *' # 9:00 AM Update
-    - cron: '0 1 * * *'  # 9:00 PM Update
+    - cron: '0 13 * * *' # 9:00 AM
+    - cron: '0 1 * * *'  # 9:00 PM
   repository_dispatch:
     types: [telegram_cmd]
 
@@ -19,6 +19,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_PAT }}
+          # This line ensures the token is saved for the 'git push' step later
+          persist-credentials: true 
           fetch-depth: 0
 
       - name: Architect Verification
@@ -34,27 +36,25 @@ jobs:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           ARCHITECT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          # Pass the command to the agents
           python3 agents/sentinel.py "$CMD_TEXT"
           python3 agents/envoy.py
 
-      - name: Commit to Ledger & World Push
+      - name: Commit & World Push
         env:
           PAT: ${{ secrets.GH_PAT }}
         run: |
+          # 1. Identity Setup
           git config --global user.name "Master CEO"
           git config --global user.email "ceo@xulplabs.com"
           
-          # Stage all changes (Ledger updates, Grid changes, etc.)
-          git add .
+          # 2. Force Authentication into the Remote
+          git remote set-url origin "https://x-access-token:${PAT}@github.com/${{ github.repository }}.git"
           
-          # Only commit if there are actual changes to avoid "Nothing to commit" errors
+          # 3. Stage and Push
+          git add .
           if ! git diff-index --quiet HEAD; then
             git commit -m "APEX GENESIS: World Build Update & Ledger Synchronization"
-            
-            # The Fix: Authenticate the push using the PAT in the URL
-            git remote set-url origin https://x-access-token:${PAT}@github.com/${{ github.repository }}.git
             git push origin main
           else
-            echo "No changes detected in World Grid or Ledger."
+            echo "No changes detected. Standing by."
           fi
