@@ -19,8 +19,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_PAT }}
-          # This line ensures the token is saved for the 'git push' step later
-          persist-credentials: true 
+          persist-credentials: false # We will handle credentials manually below
           fetch-depth: 0
 
       - name: Architect Verification
@@ -47,8 +46,9 @@ jobs:
           git config --global user.name "Master CEO"
           git config --global user.email "ceo@xulplabs.com"
           
-          # 2. Force Authentication into the Remote
-          git remote set-url origin "https://x-access-token:${PAT}@github.com/${{ github.repository }}.git"
+          # 2. THE CLEAN SLATE: Remove the old origin and add the authenticated one
+          git remote remove origin
+          git remote add origin "https://x-access-token:${PAT}@github.com/${{ github.repository }}.git"
           
           # 3. Stage and Push
           git add .
