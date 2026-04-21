@@ -21,34 +21,30 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests
-
-      - name: Run Sentinel
+      - name: Run Sentinel (Manual Override Fix)
         id: sentinel
         run: |
-          RAW_MSG="${{ github.event.client_payload.message }}"
-          if [ -z "$RAW_MSG" ]; then
-            RAW_MSG="NO_PAYLOAD"
-          fi
-          echo "DEBUG: Received message: $RAW_MSG"
-          RESPONSE=$(python3 agents/sentinel.py "$RAW_MSG")
+          # FORCING THE SHADER DEPLOYMENT:
+          # Once the shader is live, replace "#Deploy Shader" with 
+          # "${{ github.event.client_payload.message }}" to restore dynamic control.
+          RESPONSE=$(python3 agents/sentinel.py "#Deploy Shader")
           echo "AGENT_RESPONSE=$RESPONSE" >> $GITHUB_ENV
 
       - name: Sync and Push Changes
         run: |
           git config --global user.name "Master CEO"
           git config --global user.email "ceo@xulplab.com"
+          
           git add .
+          
+          # This block ensures we don't crash if the iPhone edited the repo simultaneously
           if ! git diff --cached --quiet; then
             git fetch origin main
             git rebase origin main
-            git commit -m "APEX GENESIS: World Build Update - Sync [Run ${{ github.run_number }}]"
+            git commit -m "APEX GENESIS: Shader & Build Sync [Run ${{ github.run_number }}]"
             git push origin main
           else
-            echo "No changes detected. Skipping push."
+            echo "No changes to commit."
           fi
 
       - name: Envoy Feedback
