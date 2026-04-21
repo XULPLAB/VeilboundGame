@@ -8,43 +8,39 @@ jobs:
   coordinate_build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Crucial for the CEO to push shaders/manifests
+      contents: write
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetches all history for clean rebasing
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
       - name: Run Sentinel
         id: sentinel
         run: |
-          # Capture the Telegram message from the payload
           RAW_MSG="${{ github.event.client_payload.message }}"
-          # Execute Sentinel and capture output
           RESPONSE=$(python3 agents/sentinel.py "$RAW_MSG")
-          # Save to Environment for the Envoy step
           echo "AGENT_RESPONSE=$RESPONSE" >> $GITHUB_ENV
 
       - name: Sync and Push Changes
         run: |
           git config --global user.name "Master CEO"
           git config --global user.email "ceo@xulplab.com"
-          
-          # Stage all changes (Shaders, Manifests, etc.)
           git add .
-          
-          # Check if there are actual changes before trying to commit
           if ! git diff --cached --quiet; then
-            # PULL LATEST: Fixes the 'cannot lock ref' race condition
             git fetch origin main
             git rebase origin main
-            
             git commit -m "APEX GENESIS: World Build Update - Sync [Run ${{ github.run_number }}]"
             git push origin main
           else
@@ -57,5 +53,4 @@ jobs:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           ARCHITECT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          # Only runs if Sentinel actually has something to say
           python3 agents/envoy.py "${{ env.AGENT_RESPONSE }}"
