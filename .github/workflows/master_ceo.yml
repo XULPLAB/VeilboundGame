@@ -32,8 +32,10 @@ jobs:
           CMD_TEXT: ${{ github.event.client_payload.text }}
         run: |
           pip install requests
+          # Run Sentinel and capture the output
+          # If Sentinel returns nothing, AGENT_RESPONSE will be empty
           python3 agents/sentinel.py "$CMD_TEXT" > response.txt
-          echo "AGENT_RESPONSE=$(cat response.txt)" >> $GITHUB_ENV
+          echo "AGENT_RESPONSE=$(cat response.txt | tr -d '\n')" >> $GITHUB_ENV
 
       - name: Commit & World Push
         env:
@@ -48,10 +50,12 @@ jobs:
             git commit -m "APEX GENESIS: World Build Update - $GITHUB_RUN_NUMBER"
             git push origin main
           else
-            echo "No changes."
+            echo "No changes to the world state."
           fi
 
       - name: Envoy Feedback
+        # This condition prevents the "No command detected" loop
+        if: env.AGENT_RESPONSE != ''
         env:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           ARCHITECT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
