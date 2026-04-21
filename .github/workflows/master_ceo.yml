@@ -17,35 +17,34 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python
-          # Ensuring Python is ready for the agents
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
-      - name: Install Dependencies
-        run: |
-          # This installs the missing 'requests' module
-          python -m pip install --upgrade pip
-          pip install requests
-
-      - name: Run Sentinel (Manual Override Fix)
+      - name: Run Sentinel
         id: sentinel
         run: |
-          RESPONSE=$(python3 agents/sentinel.py "#Deploy Shader")
+          # DYNAMIC CONTROL RESTORED:
+          # The CEO now listens directly to your Telegram message payload.
+          RAW_MSG="${{ github.event.client_payload.message }}"
+          RESPONSE=$(python3 agents/sentinel.py "$RAW_MSG")
           echo "AGENT_RESPONSE=$RESPONSE" >> $GITHUB_ENV
 
       - name: Sync and Push Changes
         run: |
           git config --global user.name "Master CEO"
           git config --global user.email "ceo@xulplab.com"
+          
           git add .
+          
+          # Only push if the Sentinel created new files or manifest updates
           if ! git diff --cached --quiet; then
             git fetch origin main
             git rebase origin main
-            git commit -m "APEX GENESIS: Shader & Build Sync [Run ${{ github.run_number }}]"
+            git commit -m "APEX GENESIS: World Build Update - Sync [Run ${{ github.run_number }}]"
             git push origin main
           else
-            echo "No changes to commit."
+            echo "No changes detected. Skipping push."
           fi
 
       - name: Envoy Feedback
