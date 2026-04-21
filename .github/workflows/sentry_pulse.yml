@@ -4,17 +4,21 @@ on:
   push:
     paths:
       - 'CEO_DIRECTIVES.md'
+  repository_dispatch:
+    types: [telegram_cmd]
   schedule:
-    - cron: '0 13 * * *'  # 9:00 AM EST (Morning Update)
-    - cron: '0 17 * * *'  # 1:00 PM EST (Mid-Day Update)
-    - cron: '0 1 * * *'   # 9:00 PM EST (Night Update)
+    - cron: '0 13 * * *'  # 9:00 AM EST
+    - cron: '0 17 * * *'  # 1:00 PM EST
+    - cron: '0 1 * * *'   # 9:00 PM EST
   workflow_dispatch:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  # JOB 1: Handles the Status Updates to Telegram
   apex_genesis:
+    if: github.event_name != 'repository_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -45,3 +49,36 @@ jobs:
           <i>$MSG</i>
           
           <b>STATUS: 200 OK - ULTIMATE SOVEREIGN COMMAND ENGAGED</b>"
+
+  # JOB 2: Handles the Asset Downloads (Prisms and Waystops)
+  sentinel_asset_sync:
+    if: github.event_name == 'repository_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Dependencies
+        run: pip install requests
+
+      - name: Execute Sentinel Logic
+        env:
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: python sentinel.py
+
+      - name: Commit and Push Assets
+        run: |
+          git config --global user.name "XULPLAB-Sentinel"
+          git config --global user.email "ceo@xulplabs.com"
+          git add assets/
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "🔱 Sentinel: Asset Sync [Build Update]"
+            git push
+          else
+            echo "No changes to commit"
+          fi
