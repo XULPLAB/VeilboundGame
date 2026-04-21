@@ -1,58 +1,53 @@
-import sys
 import os
+import requests
+import json
+import sys
 
-def process_command(cmd_text):
-    # Log what was received for debugging
-    if not cmd_text:
-        return "🔱 XULPLAB: Critical Error - No payload detected by Sentinel."
+def process_sentinel():
+    # 1. Grab the payload from the GitHub Action environment
+    try:
+        event_path = os.getenv('GITHUB_EVENT_PATH')
+        with open(event_path, 'r') as f:
+            event_data = json.load(f)
+        
+        payload = event_data.get('client_payload', {})
+        message = payload.get('message', '')
+        image_url = payload.get('image_url', '')
+        
+        print(f"🔱 Sentinel heard: {message}")
+    except Exception as e:
+        print(f"❌ Failed to parse payload: {e}")
+        return
 
-    cmd = cmd_text.lower().strip()
+    # 2. Define the Path Logic
+    base_path = "assets/textures"
+    folder = "misc"
     
-    # Check if the bot is talking to itself
-    if "🔱 xulplab" in cmd:
-        return None
+    if "Prisms" in message:
+        folder = "prisms"
+    elif "Waystops" in message:
+        folder = "waystops"
 
-    # SHADER DEPLOYMENT
-    if "#deploy shader" in cmd:
-        os.makedirs("assets/shaders", exist_ok=True)
-        shader_code = """shader_type spatial;
-uniform vec3 energy_color : source_color = vec3(0.0, 0.5, 1.0);
-uniform float core_intensity : hint_range(0.0, 5.0) = 2.0;
-uniform float rotation_speed : hint_range(0.0, 10.0) = 2.0;
-uniform float pulse_speed : hint_range(0.0, 5.0) = 1.5;
-void vertex() {
-    float pulse = sin(TIME * pulse_speed) * 0.05;
-    VERTEX += NORMAL * pulse;
-    float angle = TIME * rotation_speed;
-    mat2 rot = mat2(vec2(cos(angle), -sin(angle)), vec2(sin(angle), cos(angle)));
-    VERTEX.xz = rot * VERTEX.xz;
-}
-void fragment() {
-    float fresnel = pow(1.0 - dot(NORMAL, VIEW), 3.0);
-    float pulse = (sin(TIME * pulse_speed) * 0.5) + 0.5;
-    ALBEDO = energy_color * 0.2;
-    EMISSION = energy_color * (fresnel + (pulse * 0.5)) * core_intensity;
-    ALPHA = clamp(fresnel + 0.3, 0.0, 1.0);
-    ROUGHNESS = 0.1;
-    METALLIC = 0.5;
-}"""
-        with open("assets/shaders/aetheric_core.gdshader", "w") as f:
-            f.write(shader_code)
-        return "🔱 XULPLAB: Shader synthesized. 'aetheric_core.gdshader' is now live in the repository."
+    target_dir = os.path.join(base_path, folder)
+    
+    # 3. Create the folder if it doesn't exist
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+        print(f"📁 Created directory: {target_dir}")
 
-    # WAYSTOP UPDATE
-    if "#update manifest: waystops" in cmd:
-        return "🔱 XULPLAB: Waystop Manifest locked. Crystal assets registered."
-
-    # PRISM UPDATE
-    if "#update manifest: prisms" in cmd:
-        return "🔱 XULPLAB: Prism Manifest locked. 6 Tiers initialized."
-
-    # FALLBACK: If nothing matches, tell the user what the bot heard
-    return f"🔱 XULPLAB: Sentinel heard: '{cmd_text[:30]}...' but no command pattern matched. Use #Deploy Shader or #Update Manifest."
+    # 4. Download the image if provided
+    if image_url:
+        file_extension = ".png" # You can detect this from the URL if needed
+        filename = f"asset_{int(os.path.getmtime(event_path))}{file_extension}"
+        filepath = os.path.join(target_dir, filename)
+        
+        print(f"📥 Downloading asset to {filepath}...")
+        img_data = requests.get(image_url).content
+        with open(filepath, 'wb') as handler:
+            handler.write(img_data)
+        print("✅ Asset registered successfully.")
+    else:
+        print("ℹ️ No image attached. Processing command only.")
 
 if __name__ == "__main__":
-    telegram_message = sys.argv[1] if len(sys.argv) > 1 else ""
-    result = process_command(telegram_message)
-    if result:
-        print(result)
+    process_sentinel()
