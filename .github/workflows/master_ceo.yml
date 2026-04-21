@@ -32,9 +32,7 @@ jobs:
           CMD_TEXT: ${{ github.event.client_payload.text }}
         run: |
           pip install requests
-          # Run Sentinel and capture the output to a temporary file
           python3 agents/sentinel.py "$CMD_TEXT" > response.txt
-          # Set the response as an environment variable for the next steps
           echo "AGENT_RESPONSE=$(cat response.txt)" >> $GITHUB_ENV
 
       - name: Commit & World Push
@@ -50,7 +48,7 @@ jobs:
             git commit -m "APEX GENESIS: World Build Update - $GITHUB_RUN_NUMBER"
             git push origin main
           else
-            echo "No changes to commit."
+            echo "No changes."
           fi
 
       - name: Envoy Feedback
@@ -58,5 +56,4 @@ jobs:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           ARCHITECT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          # Pass the dynamic response from the Sentinel to the Envoy for Telegram
           python3 agents/envoy.py "${{ env.AGENT_RESPONSE }}"
