@@ -21,67 +21,17 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests
-
-     name: XULPLAB Master CEO - APEX GENESIS
-
-on:
-  repository_dispatch:
-    types: [telegram_cmd]
-
-jobs:
-  coordinate_build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests
-
       - name: Run Sentinel
         id: sentinel
         run: |
           RAW_MSG="${{ github.event.client_payload.message }}"
+          if [ -z "$RAW_MSG" ]; then
+            RAW_MSG="NO_PAYLOAD"
+          fi
+          echo "DEBUG: Received message: $RAW_MSG"
           RESPONSE=$(python3 agents/sentinel.py "$RAW_MSG")
           echo "AGENT_RESPONSE=$RESPONSE" >> $GITHUB_ENV
 
-      - name: Sync and Push Changes
-        run: |
-          git config --global user.name "Master CEO"
-          git config --global user.email "ceo@xulplab.com"
-          git add .
-          if ! git diff --cached --quiet; then
-            git fetch origin main
-            git rebase origin main
-            git commit -m "APEX GENESIS: World Build Update - Sync [Run ${{ github.run_number }}]"
-            git push origin main
-          else
-            echo "No changes detected. Skipping push."
-          fi
-
-      - name: Envoy Feedback
-        if: env.AGENT_RESPONSE != '' && env.AGENT_RESPONSE != 'None'
-        env:
-          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          ARCHITECT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          python3 agents/envoy.py "${{ env.AGENT_RESPONSE }}"
       - name: Sync and Push Changes
         run: |
           git config --global user.name "Master CEO"
