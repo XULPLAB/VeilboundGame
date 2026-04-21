@@ -21,6 +21,11 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
       - name: Run Sentinel
         id: sentinel
         run: |
