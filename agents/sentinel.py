@@ -2,13 +2,19 @@ import sys
 import os
 
 def process_command(cmd_text):
-    if not cmd_text or "🔱 XULPLAB" in cmd_text:
-        return None
+    # Log what was received for debugging
+    if not cmd_text:
+        return "🔱 XULPLAB: Critical Error - No payload detected by Sentinel."
 
     cmd = cmd_text.lower().strip()
     
-    # NEW LOGIC: Shader Deployment
+    # Check if the bot is talking to itself
+    if "🔱 xulplab" in cmd:
+        return None
+
+    # SHADER DEPLOYMENT
     if "#deploy shader" in cmd:
+        os.makedirs("assets/shaders", exist_ok=True)
         shader_code = """shader_type spatial;
 uniform vec3 energy_color : source_color = vec3(0.0, 0.5, 1.0);
 uniform float core_intensity : hint_range(0.0, 5.0) = 2.0;
@@ -30,21 +36,20 @@ void fragment() {
     ROUGHNESS = 0.1;
     METALLIC = 0.5;
 }"""
-        # Ensure the directory exists
-        os.makedirs("assets/shaders", exist_ok=True)
         with open("assets/shaders/aetheric_core.gdshader", "w") as f:
             f.write(shader_code)
-            
-        return "🔱 XULPLAB: Shader synthesized. 'aetheric_core.gdshader' has been deployed to assets/shaders. Ready for Prism integration."
+        return "🔱 XULPLAB: Shader synthesized. 'aetheric_core.gdshader' is now live in the repository."
 
-    # Keep existing Tower/Waystop logic below...
+    # WAYSTOP UPDATE
     if "#update manifest: waystops" in cmd:
-        return "🔱 XULPLAB: Waystop Manifest locked. Processing Crystal artifacts."
-    
-    if "propose" in cmd and "tower" in cmd:
-        return "🔱 XULPLAB: Tower anchor set. Azure variant initialized."
+        return "🔱 XULPLAB: Waystop Manifest locked. Crystal assets registered."
 
-    return "🔱 XULPLAB: Directive recognized. Ready for the next build phase."
+    # PRISM UPDATE
+    if "#update manifest: prisms" in cmd:
+        return "🔱 XULPLAB: Prism Manifest locked. 6 Tiers initialized."
+
+    # FALLBACK: If nothing matches, tell the user what the bot heard
+    return f"🔱 XULPLAB: Sentinel heard: '{cmd_text[:30]}...' but no command pattern matched. Use #Deploy Shader or #Update Manifest."
 
 if __name__ == "__main__":
     telegram_message = sys.argv[1] if len(sys.argv) > 1 else ""
