@@ -1,53 +1,62 @@
 import os
-import requests
 import json
+import requests
 import sys
 
-def process_sentinel():
-    # 1. Grab the payload from the GitHub Action environment
-    try:
-        event_path = os.getenv('GITHUB_EVENT_PATH')
-        with open(event_path, 'r') as f:
-            event_data = json.load(f)
-        
-        payload = event_data.get('client_payload', {})
-        message = payload.get('message', '')
-        image_url = payload.get('image_url', '')
-        
-        print(f"🔱 Sentinel heard: {message}")
-    except Exception as e:
-        print(f"❌ Failed to parse payload: {e}")
+def run_sentinel():
+    # 1. Access the GitHub Action Payload
+    event_path = os.getenv('GITHUB_EVENT_PATH')
+    if not event_path:
+        print("🔱 Sentinel: No event path found. Standing by.")
         return
 
-    # 2. Define the Path Logic
-    base_path = "assets/textures"
-    folder = "misc"
-    
-    if "Prisms" in message:
-        folder = "prisms"
-    elif "Waystops" in message:
-        folder = "waystops"
+    with open(event_path, 'r') as f:
+        event_data = json.load(f)
 
-    target_dir = os.path.join(base_path, folder)
-    
-    # 3. Create the folder if it doesn't exist
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
-        print(f"📁 Created directory: {target_dir}")
+    # 2. Extract Data from Cloudflare
+    payload = event_data.get('client_payload', {})
+    command = payload.get('message', '')
+    image_url = payload.get('image_url', '')
 
-    # 4. Download the image if provided
+    print(f"🔱 Sentinel heard: '{command}'")
+
+    # 3. Routing Logic
+    target_folder = "assets/textures/misc" # Fallback
+    
+    if "#Update Manifest: Waystops" in command:
+        target_folder = "assets/textures/waystops"
+        print("🔱 Waystop Manifest locked. Crystal assets registered.")
+    elif "#Update Manifest: Prisms" in command:
+        target_folder = "assets/textures/prisms"
+        print("🔱 Prism Manifest locked. 6 Tiers initialized.")
+    elif "#Deploy Shader" in command:
+        print("🔱 Shader Deployment sequence initiated.")
+        # Add your shader-specific logic here
+        return 
+
+    # 4. Create Directory & Download Asset
     if image_url:
-        file_extension = ".png" # You can detect this from the URL if needed
-        filename = f"asset_{int(os.path.getmtime(event_path))}{file_extension}"
-        filepath = os.path.join(target_dir, filename)
-        
+        if not os.path.exists(target_folder):
+            os.makedirs(target_folder, exist_ok=True)
+            print(f"📁 Created directory: {target_folder}")
+
+        # Generate a unique filename using the timestamp
+        filename = f"asset_{int(os.path.getmtime(event_path))}.png"
+        filepath = os.path.join(target_folder, filename)
+
         print(f"📥 Downloading asset to {filepath}...")
-        img_data = requests.get(image_url).content
-        with open(filepath, 'wb') as handler:
-            handler.write(img_data)
-        print("✅ Asset registered successfully.")
+        try:
+            response = requests.get(image_url, timeout=30)
+            if response.status_code == 200:
+                with open(filepath, 'wb') as f:
+                    f.write(response.content)
+                print(f"✅ Registered: {filename}")
+            else:
+                print(f"❌ Download failed (Status: {response.status_code})")
+        except Exception as e:
+            print(f"❌ Error during download: {e}")
     else:
-        print("ℹ️ No image attached. Processing command only.")
+        print("⚠️ No image detected in payload. Command processed as text-only.")
 
 if __name__ == "__main__":
-    process_sentinel()
+    run_sentinel()
