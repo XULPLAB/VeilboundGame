@@ -1,0 +1,3 @@
+LOCATION: Castlewood Park
+VARIANT: Azure
+STATUS: BUILDING
