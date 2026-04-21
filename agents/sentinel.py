@@ -2,35 +2,29 @@ import sys
 import os
 
 def process_command(cmd_text):
-    if not cmd_text:
-        return "🔱 XULPLAB: No command detected. Sovereign Engine idling."
+    # 1. Ignore empty messages or the bot's own status reports
+    if not cmd_text or "🔱 XULPLAB" in cmd_text:
+        return None  # Tells the workflow to stay silent
 
-    # Normalize the text for maximum flexibility
     cmd = cmd_text.lower().strip()
     
-    # BROAD DETECTION: Look for the keywords anywhere in the message
+    # 2. Logic for Waystop Manifest Update
+    if "#update manifest: waystops" in cmd:
+        return "🔱 XULPLAB: Waystop Manifest locked. Processing Circular and Standard Crystal artifacts for Lexington scatter."
+
+    # 3. Logic for Tower Proposals
     if "propose" in cmd and "tower" in cmd:
-        # Try to find the location name after a colon or just the word tower
         if ":" in cmd:
             location = cmd_text.split(":", 1)[1].strip()
         else:
-            location = cmd_text.lower().replace("#propose tower", "").replace("propose tower", "").strip()
+            location = cmd_text.lower().replace("#propose tower", "").strip()
         
-        if not location:
-            location = "Unknown Grid Point"
+        return f"🔱 XULPLAB: Tower anchor set for {location}. Azure variant initialized."
 
-        # Create the manifest for the Godot world build
-        with open("CONSTRUCTION_MANIFEST.txt", "w") as f:
-            f.write(f"LOCATION: {location}\nVARIANT: Azure\nSTATUS: BUILDING")
-            
-        return f"🔱 XULPLAB: Tower proposal received for {location}. Analyzing Azure variant visuals. Ready for 3D Sculpting."
-
-    elif "globalpush" in cmd:
-        return "🔱 XULPLAB: World Grid initialization confirmed. Global Shards active."
-
-    return f"🔱 XULPLAB: Directive recognized ('{cmd_text[:20]}...'). Please use #Propose Tower: Location to trigger the build."
+    return f"🔱 XULPLAB: Directive recognized. Ready for the next build phase."
 
 if __name__ == "__main__":
     telegram_message = sys.argv[1] if len(sys.argv) > 1 else ""
     result = process_command(telegram_message)
-    print(result)
+    if result:
+        print(result)
