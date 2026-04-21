@@ -5,33 +5,37 @@ def process_command(cmd_text):
     if not cmd_text:
         return "🔱 XULPLAB: No command detected. Sovereign Engine idling."
 
-    cmd = cmd_text.lower()
+    # Normalize the text for easier searching
+    clean_text = cmd_text.replace('\n', ' ').strip()
+    cmd_lower = clean_text.lower()
     
-    # Logic for Tower Proposals
-    if "#propose tower" in cmd:
+    # Improved logic for Tower Proposals
+    if "#propose tower" in cmd_lower:
         try:
-            # Extracts 'Castlewood Park' from the string
-            location = cmd_text.split("tower:")[1].strip()
+            # Splits at the colon and takes everything after it
+            if ":" in clean_text:
+                location = clean_text.split(":", 1)[1].strip()
+            else:
+                # Fallback if the colon was missed
+                location = clean_text.lower().replace("#propose tower", "").strip()
             
-            # Create a marker for the 3D Artisan to know work is needed
+            if not location:
+                return "⚠️ XULPLAB: Please specify a location (e.g., #Propose Tower: Castlewood Park)"
+
+            # Create the manifest for the Godot build
             with open("CONSTRUCTION_MANIFEST.txt", "w") as f:
                 f.write(f"LOCATION: {location}\nVARIANT: Azure\nSTATUS: BUILDING")
                 
             return f"🔱 XULPLAB: Tower proposal received for {location}. Analyzing Azure variant visuals. Ready for 3D Sculpting."
-        except IndexError:
-            return "⚠️ XULPLAB Error: Tower proposal format incorrect. Use #Propose Tower: [Location]"
+        except Exception as e:
+            return f"⚠️ XULPLAB Error: Processing failed. {str(e)}"
 
-    # Logic for Global World Push
-    elif "#globalpush" in cmd:
-        return "🔱 XULPLAB: World Grid initialization confirmed. Global Shards active and synchronized."
+    elif "#globalpush" in cmd_lower:
+        return "🔱 XULPLAB: World Grid initialization confirmed. Global Shards active."
 
-    # Default Fallback
-    return f"🔱 XULPLAB: Directive recognized. Processing system build. Current status: Synchronized."
+    return "🔱 XULPLAB: Directive recognized. Standing by for specific instructions."
 
 if __name__ == "__main__":
-    # Get the message text passed from the GitHub Workflow
     telegram_message = sys.argv[1] if len(sys.argv) > 1 else ""
     result = process_command(telegram_message)
-    
-    # This print sends the string back to the GitHub Action
     print(result)
