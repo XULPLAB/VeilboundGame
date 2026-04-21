@@ -1,63 +1,61 @@
 name: XULPLAB Master CEO - APEX GENESIS
 
-permissions:
-  contents: write
-  actions: read
-
 on:
   repository_dispatch:
     types: [telegram_cmd]
 
 jobs:
-  apex_operation:
+  coordinate_build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Crucial for the CEO to push shaders/manifests
+
     steps:
-      - name: Checkout Sovereignty
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GH_PAT }}
-          fetch-depth: 0
-          persist-credentials: false
+          fetch-depth: 0 # Fetches all history for clean rebasing
 
-      - name: Architect Verification
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Run Sentinel
+        id: sentinel
         run: |
-          if [ "${{ github.event.client_payload.chat_id }}" != "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
-            echo "Access Denied."
-            exit 1
-          fi
+          # Capture the Telegram message from the payload
+          RAW_MSG="${{ github.event.client_payload.message }}"
+          # Execute Sentinel and capture output
+          RESPONSE=$(python3 agents/sentinel.py "$RAW_MSG")
+          # Save to Environment for the Envoy step
+          echo "AGENT_RESPONSE=$RESPONSE" >> $GITHUB_ENV
 
-      - name: Execute Sovereign Core
-        id: run_agents
-        env:
-          CMD_TEXT: ${{ github.event.client_payload.text }}
-        run: |
-          pip install requests
-          # Run Sentinel and capture the output
-          # If Sentinel returns nothing, AGENT_RESPONSE will be empty
-          python3 agents/sentinel.py "$CMD_TEXT" > response.txt
-          echo "AGENT_RESPONSE=$(cat response.txt | tr -d '\n')" >> $GITHUB_ENV
-
-      - name: Commit & World Push
-        env:
-          MY_TOKEN: ${{ secrets.GH_PAT }}
+      - name: Sync and Push Changes
         run: |
           git config --global user.name "Master CEO"
-          git config --global user.email "ceo@xulplabs.com"
-          git config --global url."https://x-access-token:${MY_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git config --global user.email "ceo@xulplab.com"
           
+          # Stage all changes (Shaders, Manifests, etc.)
           git add .
-          if ! git diff-index --quiet HEAD; then
-            git commit -m "APEX GENESIS: World Build Update - $GITHUB_RUN_NUMBER"
+          
+          # Check if there are actual changes before trying to commit
+          if ! git diff --cached --quiet; then
+            # PULL LATEST: Fixes the 'cannot lock ref' race condition
+            git fetch origin main
+            git rebase origin main
+            
+            git commit -m "APEX GENESIS: World Build Update - Sync [Run ${{ github.run_number }}]"
             git push origin main
           else
-            echo "No changes to the world state."
+            echo "No changes detected. Skipping push."
           fi
 
       - name: Envoy Feedback
-        # This condition prevents the "No command detected" loop
-        if: env.AGENT_RESPONSE != ''
+        if: env.AGENT_RESPONSE != '' && env.AGENT_RESPONSE != 'None'
         env:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           ARCHITECT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
+          # Only runs if Sentinel actually has something to say
           python3 agents/envoy.py "${{ env.AGENT_RESPONSE }}"
