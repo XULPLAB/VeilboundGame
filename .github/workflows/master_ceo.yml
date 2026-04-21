@@ -17,16 +17,20 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python
+          # Ensuring Python is ready for the agents
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
+      - name: Install Dependencies
+        run: |
+          # This installs the missing 'requests' module
+          python -m pip install --upgrade pip
+          pip install requests
+
       - name: Run Sentinel (Manual Override Fix)
         id: sentinel
         run: |
-          # FORCING THE SHADER DEPLOYMENT:
-          # Once the shader is live, replace "#Deploy Shader" with 
-          # "${{ github.event.client_payload.message }}" to restore dynamic control.
           RESPONSE=$(python3 agents/sentinel.py "#Deploy Shader")
           echo "AGENT_RESPONSE=$RESPONSE" >> $GITHUB_ENV
 
@@ -34,10 +38,7 @@ jobs:
         run: |
           git config --global user.name "Master CEO"
           git config --global user.email "ceo@xulplab.com"
-          
           git add .
-          
-          # This block ensures we don't crash if the iPhone edited the repo simultaneously
           if ! git diff --cached --quiet; then
             git fetch origin main
             git rebase origin main
