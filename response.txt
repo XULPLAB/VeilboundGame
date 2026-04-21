@@ -1,0 +1,1 @@
+⚠️ XULPLAB Error: Tower proposal format incorrect. Use #Propose Tower: [Location]
