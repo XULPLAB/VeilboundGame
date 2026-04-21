@@ -21,11 +21,15 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
       - name: Run Sentinel
         id: sentinel
         run: |
-          # DYNAMIC CONTROL RESTORED:
-          # The CEO now listens directly to your Telegram message payload.
+          # DYNAMIC CONTROL: Captures your unique Telegram commands
           RAW_MSG="${{ github.event.client_payload.message }}"
           RESPONSE=$(python3 agents/sentinel.py "$RAW_MSG")
           echo "AGENT_RESPONSE=$RESPONSE" >> $GITHUB_ENV
@@ -37,7 +41,7 @@ jobs:
           
           git add .
           
-          # Only push if the Sentinel created new files or manifest updates
+          # Rebase logic prevents "remote rejected" lock errors
           if ! git diff --cached --quiet; then
             git fetch origin main
             git rebase origin main
@@ -53,4 +57,5 @@ jobs:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           ARCHITECT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
+          # The Envoy now has the 'requests' library to send the message
           python3 agents/envoy.py "${{ env.AGENT_RESPONSE }}"
