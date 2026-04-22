@@ -8,6 +8,7 @@ on:
     types: [telegram_cmd]
   workflow_dispatch:
 
+# Grant write permissions so the bot can save the images
 permissions:
   contents: write
 
@@ -18,6 +19,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Get full history to allow rebasing
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -33,9 +36,15 @@ jobs:
         run: |
           git config --global user.name "XULPLAB-Sentinel"
           git config --global user.email "ceo@xulplabs.com"
+          
+          # Stage the new textures
           git add assets/
+          
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "🔱 Sentinel: Asset Sync [Waystops/Prisms]"
+            git commit -m "Sentinel: Asset Sync [Build Update]"
+            
+            # Rebase to pull latest changes (prevents 'remote rejected' error)
+            git pull --rebase origin main
             git push origin main
           else
             echo "No new assets to commit."
