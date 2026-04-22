@@ -4,7 +4,8 @@ import urllib.request
 
 def run_sentinel():
     event_path = os.getenv('GITHUB_EVENT_PATH')
-    if not event_path: return
+    if not event_path:
+        return
 
     try:
         with open(event_path, 'r') as f:
@@ -23,18 +24,18 @@ def run_sentinel():
 
         if image_url:
             os.makedirs(target_folder, exist_ok=True)
-            # Use timestamp for unique asset naming
+            # Use timestamp for unique asset naming to prevent overwrites
             filename = f"asset_{int(os.path.getmtime(event_path))}.png"
             filepath = os.path.join(target_folder, filename)
             
-            print(f"📥 Sentinel downloading to: {filepath}")
+            print(f"Downloading asset to: {filepath}")
             urllib.request.urlretrieve(image_url, filepath)
-            print("✅ Registration Complete.")
+            print("Registration complete")
         else:
-            print("ℹ️ No image found in payload.")
+            print("No image found in payload")
             
     except Exception as e:
-        print(f"❌ Sentinel Error: {e}")
+        print(f"Sentinel Error: {e}")
 
 if __name__ == "__main__":
     run_sentinel()
