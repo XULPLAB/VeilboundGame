@@ -1,59 +1,92 @@
-name: Artisan Vision Slicer & OCR
+name: Artisan V2 - Vision Slicer
+
 on:
-  workflow_dispatch:
-    inputs:
-      telegram_file_id:
-        description: 'Telegram File ID'
-        required: true
+  repository_dispatch:
+    types: [trigger_artisan_slice]
+  workflow_dispatch: # Allows you to run it manually if needed
+
+permissions:
+  contents: write
 
 jobs:
-  process_and_slice:
+  vision_slice:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
-      
-      - name: Fetch Lexington Weather
-        id: weather
-        run: |
-          # Fetching real-time weather for Lexington
-          DATA=$(curl -s "https://api.openweathermap.org/data/2.5/weather?q=Lexington,KY,US&appid=${{ secrets.OPENWEATHER_API_KEY }}&units=imperial")
-          CONDITION=$(echo $DATA | jq -r '.weather[0].main')
-          echo "current_weather=$CONDITION" >> $GITHUB_OUTPUT
+        with:
+          fetch-depth: 0
 
-      - name: Grab Photo from Telegram
-        run: |
-          FILE_PATH=$(curl -s "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/getFile?file_id=${{ github.event.inputs.telegram_file_id }}" | jq -r '.result.file_path')
-          curl -s "https://api.telegram.org/file/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/$FILE_PATH" -o assets/uploads/artisan_input.png
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
 
-      - name: OCR & Magical Classification
-        id: artisan
+      - name: Install Image Processing
+        run: pip install Pillow
+
+      - name: Execute Sovereign Slicing Logic
         run: |
-          sudo apt-get update && sudo apt-get install -y tesseract-ocr imagemagick
-          SCAN_RESULT=$(tesseract assets/uploads/artisan_input.png stdout)
+          python3 <<EOF
+          import os
+          from PIL import Image
+
+          # Find the latest prism sheet in the folder
+          folder = "assets/textures/prisms"
+          if not os.path.exists(folder):
+              print("No prism folder found.")
+              exit(0)
+
+          files = [f for f in os.listdir(folder) if f.startswith('prism_sheet')]
+          if not files:
+              print("No prism sheet found to slice.")
+              exit(0)
+
+          # Sort by time to get the newest one
+          files.sort(key=lambda x: os.path.getmtime(os.path.join(folder, x)), reverse=True)
+          latest_sheet = os.path.join(folder, files[0])
           
-          if echo "$SCAN_RESULT" | grep -Ei "Berry|Rasp|Plum|Fig"; then TYPE="Aetheric_Berry";
-          elif echo "$SCAN_RESULT" | grep -Ei "Prism|Vessel"; then TYPE="Aetheric_Prism";
-          else TYPE="Magical_Medallion"; fi
-          
-          echo "detected_type=$TYPE" >> $GITHUB_OUTPUT
+          print(f"Slicing: {latest_sheet}")
+          img = Image.open(latest_sheet)
+          width, height = img.size
 
-      - name: Send Review to Architect
+          # Logic: Slice into 6 vertical tiers (adjust if your sheet is 2x3 or 6x1)
+          # This assumes a 1 row x 6 columns layout
+          slice_width = width // 6
+          for i in range(6):
+              left = i * slice_width
+              right = (i + 1) * slice_width
+              tier_img = img.crop((left, 0, right, height))
+              tier_img.save(f"{folder}/prism_tier_{i+1}.png")
+          
+          print("Slicing complete: 6 Tiers generated.")
+          EOF
+
+      - name: Commit Sliced Assets
+        run: |
+          git config --global user.name "XULPLAB-Artisan"
+          git config --global user.email "ceo@xulplabs.com"
+          git add assets/textures/prisms/
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "🔱 Artisan: Vision Slicing Complete [6 Tiers]"
+            git pull --rebase origin main
+            git push origin main
+          else
+            echo "No new slices to commit."
+          fi
+
+      - name: Master CEO Artisan Report
+        if: always()
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          MSG="🔱 <b>[VISION SCAN COMPLETE]</b>%0A"
-          MSG+="------------------------%0A"
-          MSG+="<b>Object:</b> ${{ steps.artisan.outputs.detected_type }}%0A"
-          MSG+="<b>Lexington Weather:</b> ${{ steps.weather.outputs.current_weather }}%0A"
-          MSG+="<b>Logic:</b> Aether Tap + Shatter-Sync%0A"
-          MSG+="------------------------%0A"
-          MSG+="<i>Manifest this into the High Magical Fantasy Grimoire?</i>"
-
-          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto" \
-          -F chat_id="${CHAT_ID}" \
-          -F photo="@assets/uploads/artisan_input.png" \
-          -F caption="$MSG" \
-          -F parse_mode="HTML" \
-          -F reply_markup='{"inline_keyboard":[[{"text":"✅ MANIFEST","callback_data":"push"}]]}'
+          if [ "${{ job.status }}" == "success" ]; then
+            TEXT="<b>🔱 MASTER CEO: ARTISAN COMPLETE</b>%0A%0AStatus: 200 OK%0AAction: Vision Slicing Success.%0A<i>6 Prism Tiers have been manifest.</i>"
+          else
+            TEXT="<b>⚠️ MASTER CEO: ARTISAN FAILURE</b>%0A%0AStatus: 500 ERROR%0ACheck Image Dimensions or Pillow installation."
+          fi
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+          -d chat_id="${CHAT_ID}" \
+          -d parse_mode="HTML" \
+          -d text="$TEXT"
