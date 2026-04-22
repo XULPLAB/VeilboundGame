@@ -8,11 +8,33 @@ on:
     types: [telegram_cmd]
   workflow_dispatch:
 
-# Grant write permissions so the bot can save the images
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
+  # JOB 1: Automated Status Reports (The Messenger)
+  apex_genesis:
+    if: github.event_name != 'repository_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Master CEO Sovereign Command
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          MSG=$(git log -1 --pretty=%B || echo "Manual Trigger")
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+          -d chat_id="${CHAT_ID}" \
+          -d parse_mode="HTML" \
+          -d text="<b>🔱 MASTER CEO: APEX GENESIS ACTIVE</b>%0A%0A<b>[DIRECTIVE]</b>%0A<i>$MSG</i>"
+
+  # JOB 2: Image Intake & Artisan Handshake (The Worker)
   sentinel_asset_sync:
     if: github.event_name == 'repository_dispatch'
     runs-on: ubuntu-latest
@@ -20,23 +42,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Get full history to allow rebasing
-- name: Master CEO Confirmation
-        if: success()
-        env:
-          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-          -d chat_id="${CHAT_ID}" \
-          -d parse_mode="HTML" \
-          -d text="<b>🔱 MASTER CEO: ASSET REGISTERED</b>
-          
-          <b>[SENTINEL REPORT]</b>
-          Target: <code>assets/textures/prisms</code>
-          Status: Manifest Locked. Crystal assets registered.
-          
-          <i>The Lexington Alpha build is being updated...</i>"      - name: Set up Python
+          fetch-depth: 0
+
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
@@ -47,19 +55,40 @@ jobs:
         run: python3 agents/sentinel.py
 
       - name: Commit and Push Assets
+        id: push_assets
         run: |
           git config --global user.name "XULPLAB-Sentinel"
           git config --global user.email "ceo@xulplabs.com"
-          
-          # Stage the new textures
           git add assets/
-          
           if [ -n "$(git status --porcelain)" ]; then
             git commit -m "Sentinel: Asset Sync [Build Update]"
-            
-            # Rebase to pull latest changes (prevents 'remote rejected' error)
             git pull --rebase origin main
             git push origin main
+            echo "pushed=true" >> $GITHUB_OUTPUT
           else
-            echo "No new assets to commit."
+            echo "pushed=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: Trigger Artisan Vision Slicer
+        if: steps.push_assets.outputs.pushed == 'true' && contains(github.event.client_payload.message, '#Update Manifest: Prisms')
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          event-type: trigger_artisan_slice
+          client_payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
+
+      - name: Master CEO Confirmation Alert
+        if: always()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            TEXT="<b>🔱 MASTER CEO: ASSET REGISTERED</b>%0A%0AStatus: 200 OK%0AManifest: Sync Complete.%0A<i>Handshake with Artisan Engaged.</i>"
+          else
+            TEXT="<b>⚠️ MASTER CEO: SYSTEM ALERT</b>%0A%0AStatus: 500 ERROR%0ACheck Sentinel Logs for pathing or push conflicts."
+          fi
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+          -d chat_id="${CHAT_ID}" \
+          -d parse_mode="HTML" \
+          -d text="$TEXT"
