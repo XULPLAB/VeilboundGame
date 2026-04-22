@@ -1,0 +1,79 @@
+import os
+import uuid
+from PIL import Image, ImageOps
+from rembg import remove
+
+def process_assets():
+    # Base directory where Sentinel drops the sheets
+    base_dir = "assets/textures"
+    sub_folders = ["prisms", "creatures"]
+    
+    found_sheet = None
+    sheet_type = None
+
+    # 1. SCAN: Look for the most recent master sheet
+    for sub in sub_folders:
+        path = os.path.join(base_dir, sub)
+        if not os.path.exists(path): 
+            os.makedirs(path, exist_ok=True)
+            continue
+        
+        # We look for files containing 'sheet' in the filename
+        files = [f for f in os.listdir(path) if 'sheet' in f.lower()]
+        if files:
+            files.sort(key=lambda x: os.path.getmtime(os.path.join(path, x)), reverse=True)
+            found_sheet = os.path.join(path, files[0])
+            sheet_type = sub
+            break
+
+    if not found_sheet:
+        print("🔱 MASTER CEO: No master sheets detected for processing.")
+        return
+
+    print(f"🔱 ARTISAN: Manifesting {sheet_type} from {found_sheet}")
+    img = Image.open(found_sheet).convert("RGBA")
+    w, h = img.size
+
+    # 2. ADAPTIVE GRID MATH
+    if sheet_type == "prisms":
+        # Lexington Alpha Prisms are 1x6
+        cols, rows, total_items = 6, 1, 6
+    elif sheet_type == "creatures":
+        # Standardized 21-unit layout (3x7 grid)
+        cols, rows, total_items = 3, 7, 21
+    else:
+        cols, rows, total_items = 1, 1, 1
+
+    tile_w, tile_h = w // cols, h // rows
+    count = 0
+
+    # 3. PROCESSING LOOP: Slice, Remove BG, and Pad
+    for r in range(rows):
+        for c in range(cols):
+            count += 1
+            if count > total_items: break
+            
+            # Slice the unit from the master sheet
+            left, top = c * tile_w, r * tile_h
+            tile = img.crop((left, top, left + tile_w, top + tile_h))
+            
+            # AI Background Removal (This makes it 'Game Ready')
+            prepped_tile = remove(tile)
+            
+            # ADD 10% PADDING: This gives wings and 'breathing' room 
+            # to move in the Godot shader without hitting the edge.
+            pad_w, pad_h = int(tile_w * 0.1), int(tile_h * 0.1)
+            prepped_tile = ImageOps.expand(prepped_tile, border=(pad_w, pad_h), fill=(0, 0, 0, 0))
+            
+            # Save with a unique ID to avoid cache issues on your iPhone/Mobile
+            unique_id = uuid.uuid4().hex[:4]
+            save_name = f"{sheet_type}_unit_{count}_{unique_id}.png"
+            save_path = os.path.join(base_dir, sheet_type, save_name)
+            prepped_tile.save(save_path)
+
+    # 4. CLEANUP: Delete the master sheet so the repo stays small
+    os.remove(found_sheet)
+    print(f"🔱 ARTISAN: {count} assets prepped and optimized.")
+
+if __name__ == "__main__":
+    process_assets()
