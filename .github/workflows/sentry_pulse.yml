@@ -21,8 +21,22 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Get full history to allow rebasing
-
-      - name: Set up Python
+- name: Master CEO Confirmation
+        if: success()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+          -d chat_id="${CHAT_ID}" \
+          -d parse_mode="HTML" \
+          -d text="<b>🔱 MASTER CEO: ASSET REGISTERED</b>
+          
+          <b>[SENTINEL REPORT]</b>
+          Target: <code>assets/textures/prisms</code>
+          Status: Manifest Locked. Crystal assets registered.
+          
+          <i>The Lexington Alpha build is being updated...</i>"      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
