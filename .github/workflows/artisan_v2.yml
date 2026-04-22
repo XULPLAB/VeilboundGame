@@ -1,12 +1,15 @@
-name: Artisan V2 - Vision Slicer
+name: Artisan V2 - Vision Slicer & BG Removal
 
 on:
   repository_dispatch:
     types: [trigger_artisan_slice]
-  workflow_dispatch: # Allows you to run it manually if needed
+  workflow_dispatch:
 
 permissions:
   contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   vision_slice:
@@ -20,72 +23,47 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.9'
 
-      - name: Install Image Processing
-        run: pip install Pillow
-
-      - name: Execute Sovereign Slicing Logic
+      - name: Install Game-Ready Prep Tools
         run: |
-          python3 <<EOF
-          import os
-          from PIL import Image
+          # Install Pillow for slicing, rembg for AI background removal, 
+          # and onnxruntime for the processing engine.
+          pip install Pillow rembg onnxruntime
 
-          # Find the latest prism sheet in the folder
-          folder = "assets/textures/prisms"
-          if not os.path.exists(folder):
-              print("No prism folder found.")
-              exit(0)
+      - name: Run Adaptive Slicer & AI BG Remover
+        # This executes the Python logic we will build in Step 2
+        run: python3 agents/artisan_logic.py
 
-          files = [f for f in os.listdir(folder) if f.startswith('prism_sheet')]
-          if not files:
-              print("No prism sheet found to slice.")
-              exit(0)
-
-          # Sort by time to get the newest one
-          files.sort(key=lambda x: os.path.getmtime(os.path.join(folder, x)), reverse=True)
-          latest_sheet = os.path.join(folder, files[0])
-          
-          print(f"Slicing: {latest_sheet}")
-          img = Image.open(latest_sheet)
-          width, height = img.size
-
-          # Logic: Slice into 6 vertical tiers (adjust if your sheet is 2x3 or 6x1)
-          # This assumes a 1 row x 6 columns layout
-          slice_width = width // 6
-          for i in range(6):
-              left = i * slice_width
-              right = (i + 1) * slice_width
-              tier_img = img.crop((left, 0, right, height))
-              tier_img.save(f"{folder}/prism_tier_{i+1}.png")
-          
-          print("Slicing complete: 6 Tiers generated.")
-          EOF
-
-      - name: Commit Sliced Assets
+      - name: Commit and Push Prepped Assets
+        id: commit_assets
         run: |
           git config --global user.name "XULPLAB-Artisan"
           git config --global user.email "ceo@xulplabs.com"
-          git add assets/textures/prisms/
+          git add assets/
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "🔱 Artisan: Vision Slicing Complete [6 Tiers]"
+            git commit -m "🔱 Artisan: Assets Prepped (BG Removed & Sliced)"
             git pull --rebase origin main
             git push origin main
+            echo "changes=true" >> $GITHUB_OUTPUT
           else
-            echo "No new slices to commit."
+            echo "No changes detected."
+            echo "changes=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Master CEO Artisan Report
+      - name: Master CEO Report
         if: always()
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
+          # Determine status message
           if [ "${{ job.status }}" == "success" ]; then
-            TEXT="<b>🔱 MASTER CEO: ARTISAN COMPLETE</b>%0A%0AStatus: 200 OK%0AAction: Vision Slicing Success.%0A<i>6 Prism Tiers have been manifest.</i>"
+            TEXT="<b>🔱 MASTER CEO: ARTISAN FINALIZED</b>%0A%0AStatus: 200 OK%0AAction: BG Removal & 21-Unit Slicing Complete.%0A<i>Assets are now Game-Ready for the Lexington Build.</i>"
           else
-            TEXT="<b>⚠️ MASTER CEO: ARTISAN FAILURE</b>%0A%0AStatus: 500 ERROR%0ACheck Image Dimensions or Pillow installation."
+            TEXT="<b>⚠️ MASTER CEO: ARTISAN FAILURE</b>%0A%0AStatus: 500 ERROR%0A<i>Check logs for rembg/onnx threading issues.</i>"
           fi
+          
           curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
           -d chat_id="${CHAT_ID}" \
           -d parse_mode="HTML" \
