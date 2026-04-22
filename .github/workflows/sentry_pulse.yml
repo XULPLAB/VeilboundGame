@@ -6,51 +6,12 @@ on:
       - 'CEO_DIRECTIVES.md'
   repository_dispatch:
     types: [telegram_cmd]
-  schedule:
-    - cron: '0 13 * * *'  # 9:00 AM EST
-    - cron: '0 17 * * *'  # 1:00 PM EST
-    - cron: '0 1 * * *'   # 9:00 PM EST
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+permissions:
+  contents: write
 
 jobs:
-  # JOB 1: Status Updates (Runs on Schedule or Manual Push)
-  apex_genesis:
-    if: github.event_name != 'repository_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Master CEO Sovereign Command
-        env:
-          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          MSG=$(git log -1 --pretty=%B || echo "Manual Trigger")
-          
-          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-          -d chat_id="${CHAT_ID}" \
-          -d parse_mode="HTML" \
-          -d text="<b>🔱 MASTER CEO: APEX GENESIS ACTIVE</b>
-          
-          <b>[SYSTEM STATUS]</b>
-          Engine: Node.js 24 (Optimized)
-          Rhythm: 09:00 / 13:00 / 21:00 EST
-          
-          <b>[WORLD ARCHITECTURE]</b>
-          - Incursions: Order of Qwen 'Gold Q' Logic Active
-          - Mapping: 1:1 Geospatial (5-Decimal GPS)
-          - Battery: Accessory Socket Rendering Engaged
-          
-          <b>[DIRECTIVE UPDATE]</b>
-          <i>$MSG</i>
-          
-          <b>STATUS: 200 OK - ULTIMATE SOVEREIGN COMMAND ENGAGED</b>"
-
-  # JOB 2: Asset Processing (Runs when Telegram sends an image/command)
   sentinel_asset_sync:
     if: github.event_name == 'repository_dispatch'
     runs-on: ubuntu-latest
@@ -63,13 +24,10 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install Dependencies
-        run: pip install requests
-
       - name: Execute Sentinel Logic
         env:
           GITHUB_EVENT_PATH: ${{ github.event_path }}
-        run: python sentinel.py
+        run: python3 agents/sentinel.py
 
       - name: Commit and Push Assets
         run: |
@@ -77,8 +35,8 @@ jobs:
           git config --global user.email "ceo@xulplabs.com"
           git add assets/
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "🔱 Sentinel: Asset Sync [Build Update]"
-            git push
+            git commit -m "🔱 Sentinel: Asset Sync [Waystops/Prisms]"
+            git push origin main
           else
-            echo "No changes detected in assets folder."
+            echo "No new assets to commit."
           fi
