@@ -3,11 +3,11 @@ name: Artisan V2 - Vision Slicer & BG Removal
 on:
   repository_dispatch:
     types: [trigger_artisan_slice]
-  workflow_dispatch: # Allows you to trigger this manually from your iPhone/GitHub Actions tab
+  workflow_dispatch:
 
 permissions:
-  contents: write   # CRITICAL FIX: Explicitly allows the bot to commit files
-  actions: write    # Allows the bot to talk to other workflows
+  contents: write
+  actions: write
 
 jobs:
   vision_slice:
@@ -23,54 +23,66 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Fix Dependencies & Environment
+      - name: Initialize Environment & Create Agent Script
         run: |
           pip install Pillow rembg onnxruntime
-          # Pre-create all necessary Godot and Asset directories
-          mkdir -p assets/textures/creatures
-          mkdir -p assets/textures/prisms
-          mkdir -p res/shaders
-          mkdir -p res/scripts
-          mkdir -p agents
-          # Add .gitkeep to ensure Git tracks empty folders
-          touch assets/textures/creatures/.gitkeep
-          touch assets/textures/prisms/.gitkeep
-          touch res/shaders/.gitkeep
-          touch res/scripts/.gitkeep
+          mkdir -p agents assets/textures/creatures assets/textures/prisms res/shaders res/scripts
+          
+          # MANIFEST THE PYTHON SCRIPT DIRECTLY (This solves the 'No such file' error)
+          cat << 'EOF' > agents/artisan_logic.py
+          import os, uuid
+          from PIL import Image, ImageOps
+          from rembg import remove
+          def process_assets():
+              base_dir = "assets/textures"
+              sub_folders = ["prisms", "creatures"]
+              found_sheet, sheet_type = None, None
+              for sub in sub_folders:
+                  path = os.path.join(base_dir, sub)
+                  if not os.path.exists(path): os.makedirs(path, exist_ok=True); continue
+                  files = [f for f in os.listdir(path) if 'sheet' in f.lower()]
+                  if files:
+                      files.sort(key=lambda x: os.path.getmtime(os.path.join(path, x)), reverse=True)
+                      found_sheet, sheet_type = os.path.join(path, files[0]), sub
+                      break
+              if not found_sheet: return
+              img = Image.open(found_sheet).convert("RGBA")
+              w, h = img.size
+              cols, rows, total = (6, 1, 6) if sheet_type == "prisms" else (3, 7, 21)
+              tw, th = w // cols, h // rows
+              count = 0
+              for r in range(rows):
+                  for c in range(cols):
+                      count += 1
+                      if count > total: break
+                      tile = img.crop((c*tw, r*th, c*tw+tw, r*th+th))
+                      tile = remove(tile)
+                      pw, ph = int(tw*0.1), int(th*0.1)
+                      tile = ImageOps.expand(tile, border=(pw, ph), fill=(0,0,0,0))
+                      tile.save(os.path.join(base_dir, sheet_type, f"{sheet_type}_unit_{count}_{uuid.uuid4().hex[:4]}.png"))
+              os.remove(found_sheet)
+          if __name__ == "__main__": process_assets()
+          EOF
 
-      - name: Run Adaptive Slicer & AI BG Remover
-        # This calls the agent script we created in Step 2
+      - name: Run Adaptive Slicer
         run: python3 agents/artisan_logic.py
 
-      - name: Commit and Push Game-Ready Assets
+      - name: Commit and Push
         run: |
           git config --global user.name "XULPLAB-Artisan"
           git config --global user.email "ceo@xulplabs.com"
-          
-          # Add all new assets and the new folder structures
-          git add assets/ res/ agents/
-          
+          git add .
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "🔱 Artisan: Assets Prepped (BG Removed & Sliced) + Folders Initialized"
+            git commit -m "🔱 Artisan: Auto-Manifest Script & Processed Assets"
             git pull --rebase origin main
             git push origin main
-          else
-            echo "No changes detected. Board is already clean."
           fi
 
-      - name: Master CEO Telegram Report
+      - name: Master CEO Report
         if: always()
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          if [ "${{ job.status }}" == "success" ]; then
-            TEXT="<b>🔱 MASTER CEO: ARTISAN SUCCESS</b>%0A%0AStatus: 200 OK%0AAction: 21-Unit Slicing & BG Removal Complete.%0A<i>Folders res/shaders and res/scripts are now live.</i>"
-          else
-            TEXT="<b>⚠️ MASTER CEO: ARTISAN FAILURE</b>%0A%0AStatus: 500 ERROR%0A<i>Check 'Run Adaptive Slicer' logs for Python or Permission errors.</i>"
-          fi
-          
-          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-          -d chat_id="${CHAT_ID}" \
-          -d parse_mode="HTML" \
-          -d text="$TEXT"
+          TEXT="<b>🔱 MASTER CEO: ARTISAN REPORT</b>%0AStatus: ${{ job.status }}"
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" -d chat_id="${CHAT_ID}" -d parse_mode="HTML" -d text="$TEXT"
