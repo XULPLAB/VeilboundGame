@@ -3,13 +3,11 @@ name: Artisan V2 - Vision Slicer & BG Removal
 on:
   repository_dispatch:
     types: [trigger_artisan_slice]
-  workflow_dispatch:
+  workflow_dispatch: # Allows you to trigger this manually from your iPhone/GitHub Actions tab
 
 permissions:
-  contents: write
-  actions: write
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  contents: write   # CRITICAL FIX: Explicitly allows the bot to commit files
+  actions: write    # Allows the bot to talk to other workflows
 
 jobs:
   vision_slice:
@@ -25,43 +23,51 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install Game-Ready Prep Tools
+      - name: Fix Dependencies & Environment
         run: |
-          # Install Pillow for slicing, rembg for AI background removal, 
-          # and onnxruntime for the processing engine.
           pip install Pillow rembg onnxruntime
+          # Pre-create all necessary Godot and Asset directories
+          mkdir -p assets/textures/creatures
+          mkdir -p assets/textures/prisms
+          mkdir -p res/shaders
+          mkdir -p res/scripts
+          mkdir -p agents
+          # Add .gitkeep to ensure Git tracks empty folders
+          touch assets/textures/creatures/.gitkeep
+          touch assets/textures/prisms/.gitkeep
+          touch res/shaders/.gitkeep
+          touch res/scripts/.gitkeep
 
       - name: Run Adaptive Slicer & AI BG Remover
-        # This executes the Python logic we will build in Step 2
+        # This calls the agent script we created in Step 2
         run: python3 agents/artisan_logic.py
 
-      - name: Commit and Push Prepped Assets
-        id: commit_assets
+      - name: Commit and Push Game-Ready Assets
         run: |
           git config --global user.name "XULPLAB-Artisan"
           git config --global user.email "ceo@xulplabs.com"
-          git add assets/
+          
+          # Add all new assets and the new folder structures
+          git add assets/ res/ agents/
+          
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "🔱 Artisan: Assets Prepped (BG Removed & Sliced)"
+            git commit -m "🔱 Artisan: Assets Prepped (BG Removed & Sliced) + Folders Initialized"
             git pull --rebase origin main
             git push origin main
-            echo "changes=true" >> $GITHUB_OUTPUT
           else
-            echo "No changes detected."
-            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "No changes detected. Board is already clean."
           fi
 
-      - name: Master CEO Report
+      - name: Master CEO Telegram Report
         if: always()
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          # Determine status message
           if [ "${{ job.status }}" == "success" ]; then
-            TEXT="<b>🔱 MASTER CEO: ARTISAN FINALIZED</b>%0A%0AStatus: 200 OK%0AAction: BG Removal & 21-Unit Slicing Complete.%0A<i>Assets are now Game-Ready for the Lexington Build.</i>"
+            TEXT="<b>🔱 MASTER CEO: ARTISAN SUCCESS</b>%0A%0AStatus: 200 OK%0AAction: 21-Unit Slicing & BG Removal Complete.%0A<i>Folders res/shaders and res/scripts are now live.</i>"
           else
-            TEXT="<b>⚠️ MASTER CEO: ARTISAN FAILURE</b>%0A%0AStatus: 500 ERROR%0A<i>Check logs for rembg/onnx threading issues.</i>"
+            TEXT="<b>⚠️ MASTER CEO: ARTISAN FAILURE</b>%0A%0AStatus: 500 ERROR%0A<i>Check 'Run Adaptive Slicer' logs for Python or Permission errors.</i>"
           fi
           
           curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
