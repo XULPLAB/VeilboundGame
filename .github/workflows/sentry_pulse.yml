@@ -1,42 +1,16 @@
-name: Cloud Sentry Pulse
+name: Sentry Pulse - Asset Sync & Dispatch
 
 on:
   push:
     paths:
-      - 'CEO_DIRECTIVES.md'
-  repository_dispatch:
-    types: [telegram_cmd]
+      - 'assets/textures/**'
   workflow_dispatch:
 
 permissions:
   contents: write
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
-  # JOB 1: Automated Status Reports (The Messenger)
-  apex_genesis:
-    if: github.event_name != 'repository_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Master CEO Sovereign Command
-        env:
-          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          MSG=$(git log -1 --pretty=%B || echo "Manual Trigger")
-          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-          -d chat_id="${CHAT_ID}" \
-          -d parse_mode="HTML" \
-          -d text="<b>🔱 MASTER CEO: APEX GENESIS ACTIVE</b>%0A%0A<b>[DIRECTIVE]</b>%0A<i>$MSG</i>"
-
-  # JOB 2: Image Intake & Artisan Handshake (The Worker)
-  sentinel_asset_sync:
-    if: github.event_name == 'repository_dispatch'
+  coordinate_assets:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -44,51 +18,57 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Execute Sentinel Logic
-        env:
-          GITHUB_EVENT_PATH: ${{ github.event_path }}
-        run: python3 agents/sentinel.py
-
-      - name: Commit and Push Assets
-        id: push_assets
+      - name: Detect Asset Type and Dispatch
+        id: detector
         run: |
-          git config --global user.name "XULPLAB-Sentinel"
-          git config --global user.email "ceo@xulplabs.com"
-          git add assets/
-          if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "Sentinel: Asset Sync [Build Update]"
-            git pull --rebase origin main
-            git push origin main
-            echo "pushed=true" >> $GITHUB_OUTPUT
+          # Identify if the new file is a creature sheet or a prism sheet
+          if git diff --name-only HEAD^ HEAD | grep -q "creatures/.*sheet"; then
+            echo "target=creatures" >> $GITHUB_OUTPUT
+            echo "trigger=true" >> $GITHUB_OUTPUT
+          elif git diff --name-only HEAD^ HEAD | grep -q "prisms/.*sheet"; then
+            echo "target=prisms" >> $GITHUB_OUTPUT
+            echo "trigger=true" >> $GITHUB_OUTPUT
           else
-            echo "pushed=false" >> $GITHUB_OUTPUT
+            echo "trigger=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Trigger Artisan Vision Slicer
-        if: steps.push_assets.outputs.pushed == 'true' && contains(github.event.client_payload.message, '#Update Manifest: Prisms')
+      - name: Conflict Resolver Commit & Push
+        run: |
+          git config --global user.name "XULPLAB-Sentry"
+          git config --global user.email "sentry@xulplabs.com"
+          
+          # Stage all changes
+          git add .
+          
+          # Conflict Resolver: Try to push up to 5 times if the branch moves
+          if [ -n "$(git status --porcelain)" ]; then
+            n=0
+            until [ "$n" -ge 5 ]
+            do
+              git pull --rebase origin main && \
+              git commit -m "📡 Sentry: Syncing Asset Manifest" && \
+              git push origin main && break
+              n=$((n+1))
+              echo "Collision detected. Retrying in 5s... (Attempt $n)"
+              sleep 5
+            done
+          else
+            echo "No sync required."
+          fi
+
+      - name: Trigger Artisan V2 Handshake
+        if: steps.detector.outputs.trigger == 'true'
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           event-type: trigger_artisan_slice
-          client_payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
+          client-payload: '{"type": "${{ steps.detector.outputs.target }}"}'
 
-      - name: Master CEO Confirmation Alert
+      - name: Sentry Report
         if: always()
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          if [ "${{ job.status }}" == "success" ]; then
-            TEXT="<b>🔱 MASTER CEO: ASSET REGISTERED</b>%0A%0AStatus: 200 OK%0AManifest: Sync Complete.%0A<i>Handshake with Artisan Engaged.</i>"
-          else
-            TEXT="<b>⚠️ MASTER CEO: SYSTEM ALERT</b>%0A%0AStatus: 500 ERROR%0ACheck Sentinel Logs for pathing or push conflicts."
-          fi
-          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-          -d chat_id="${CHAT_ID}" \
-          -d parse_mode="HTML" \
-          -d text="$TEXT"
+          TEXT="<b>📡 SENTRY PULSE: STATUS UPDATE</b>%0AStatus: ${{ job.status }}%0AHandshake Sent: ${{ steps.detector.outputs.trigger }}"
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" -d chat_id="${CHAT_ID}" -d parse_mode="HTML" -d text="$TEXT"
