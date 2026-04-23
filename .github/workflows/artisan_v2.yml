@@ -28,7 +28,7 @@ jobs:
           pip install Pillow rembg onnxruntime
           mkdir -p agents assets/textures/creatures assets/textures/prisms res/shaders res/scripts
           
-          # MANIFEST THE PYTHON SCRIPT DIRECTLY (This solves the 'No such file' error)
+          # MANIFEST THE PYTHON SCRIPT
           cat << 'EOF' > agents/artisan_logic.py
           import os, uuid
           from PIL import Image, ImageOps
@@ -64,6 +64,53 @@ jobs:
           if __name__ == "__main__": process_assets()
           EOF
 
+      - name: Manifest Godot Animation Engine
+        run: |
+          # Create the Universal Shader
+          cat << 'EOF' > res/shaders/creature_standard.gdshader
+          shader_type canvas_item;
+          uniform bool is_flyer = false;
+          uniform float speed = 2.0;
+          uniform float amplitude = 0.05;
+          uniform float reaction_power = 0.0;
+          void vertex() {
+              float time = TIME * speed;
+              if (is_flyer) {
+                  VERTEX.y += sin(time) * 15.0; 
+                  VERTEX.y += sin(time * 2.0) * (abs(VERTEX.x) * 0.2);
+                  VERTEX.x += cos(time * 0.5) * 5.0;
+              } else {
+                  float breath = sin(time) * amplitude;
+                  VERTEX.y *= (1.0 - breath);
+                  VERTEX.x *= (1.0 + breath * 0.5);
+              }
+              VERTEX.y -= reaction_power * 40.0 * abs(sin(TIME * 20.0));
+          }
+          void fragment() {
+              vec4 col = texture(TEXTURE, UV);
+              float glow_mask = reaction_power * 0.5;
+              vec3 glow_color = vec3(0.0, 0.8, 1.0); 
+              COLOR = vec4(col.rgb + (glow_color * glow_mask * col.a), col.a);
+          }
+          EOF
+
+          # Create the Behavior Script
+          cat << 'EOF' > res/scripts/creature_behavior.gd
+          extends Sprite2D
+          var reaction_tween: Tween
+          func _ready():
+              if material: material = material.duplicate()
+          func trigger_tap_reaction():
+              if reaction_tween: reaction_tween.kill()
+              reaction_tween = create_tween()
+              material.set_shader_parameter("reaction_power", 1.0)
+              reaction_tween.tween_property(material, "shader_parameter/reaction_power", 0.0, 0.8).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+              var ot = scale
+              var p = create_tween()
+              p.tween_property(self, "scale", ot * 1.1, 0.1)
+              p.tween_property(self, "scale", ot, 0.3)
+          EOF
+
       - name: Run Adaptive Slicer
         run: python3 agents/artisan_logic.py
 
@@ -73,7 +120,7 @@ jobs:
           git config --global user.email "ceo@xulplabs.com"
           git add .
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "🔱 Artisan: Auto-Manifest Script & Processed Assets"
+            git commit -m "🔱 Artisan: Assets Prepped + Godot Animation Engine Manifested"
             git pull --rebase origin main
             git push origin main
           fi
@@ -84,5 +131,5 @@ jobs:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          TEXT="<b>🔱 MASTER CEO: ARTISAN REPORT</b>%0AStatus: ${{ job.status }}"
+          TEXT="<b>🔱 MASTER CEO: GENESIS COMPLETE</b>%0AStatus: ${{ job.status }}%0AAnimation Engine is now live in /res/."
           curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" -d chat_id="${CHAT_ID}" -d parse_mode="HTML" -d text="$TEXT"
