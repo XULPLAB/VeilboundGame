@@ -19,4 +19,14 @@ jobs:
         run: |
           echo "Starting General World Push for Lexington..."
           echo "Applying Castlewood Park Biome Overlay..."
-          # The Artisan's automated build scripts will be triggered here
+          # Artisan scripts would trigger here to build the scene
+
+      - name: Return Universal Preview
+        run: |
+          # Replace 'your-worker-name.subdomain.workers.dev' with your actual Worker URL
+          curl -X POST https://your-worker-name.subdomain.workers.dev \
+          -H "Content-Type: application/json" \
+          -d '{
+            "image_url": "https://raw.githubusercontent.com/${{ github.repository }}/main/assets/previews/castlewood_nexus.png", 
+            "message": "PREVIEW: ${{ github.event.client_payload.commander_directive }}"
+          }'
