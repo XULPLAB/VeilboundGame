@@ -1,0 +1,22 @@
+name: XULPLAB World Fade
+on:
+  repository_dispatch:
+    types: [world_gen_deploy, telegram_cmd]
+
+jobs:
+  execute_fade:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log Commander Directive
+        run: |
+          echo "Commander Sign-off: ${{ github.event.client_payload.commander_directive }}"
+          echo "Targeting: ${{ github.event.client_payload.biome_target }}"
+
+      - name: Deploy Flat Indigo Skin
+        run: |
+          echo "Starting General World Push for Lexington..."
+          echo "Applying Castlewood Park Biome Overlay..."
+          # The Artisan's automated build scripts will be triggered here
