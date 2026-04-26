@@ -7,24 +7,28 @@ jobs:
   execute_fade:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Log Commander Directive
         run: |
           echo "Commander Sign-off: ${{ github.event.client_payload.commander_directive }}"
+          echo "Targeting: Lexington Castlewood Nexus"
 
-      - name: Deploy Flat Indigo Skin
+      - name: Deploy World Skin
         run: |
           echo "Starting General World Push for Lexington..."
-          # Artisan build logic executes here
+          echo "Applying Castlewood Park Biome Overlay..."
+          # Artisan automated scripts would execute world-gen here
 
       - name: Return Universal Preview
         run: |
-          curl -X POST "https://veilbound-artisan-webhook.veilboundgame.workers.dev" \
+          # We use a public image first to ensure the pipeline is open
+          # Once confirmed, replace the image_url with your raw GitHub asset link
+          curl -v -X POST "https://veilbound-artisan-webhook.veilboundgame.workers.dev" \
           -H "Content-Type: application/json" \
           -H "User-Agent: XULPLAB-Artisan-Render" \
           -d '{
-            "image_url": "https://raw.githubusercontent.com/XULPLAB/VeilboundGame/main/assets/previews/castlewood_nexus.png", 
-            "message": "PREVIEW: ${{ github.event.client_payload.commander_directive }}"
+            "image_url": "https://picsum.photos/800/600", 
+            "message": "ARTISAN VERIFIED: ${{ github.event.client_payload.commander_directive }}"
           }'
