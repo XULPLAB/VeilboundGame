@@ -13,20 +13,18 @@ jobs:
       - name: Log Commander Directive
         run: |
           echo "Commander Sign-off: ${{ github.event.client_payload.commander_directive }}"
-          echo "Targeting: ${{ github.event.client_payload.biome_target }}"
 
       - name: Deploy Flat Indigo Skin
         run: |
           echo "Starting General World Push for Lexington..."
-          echo "Applying Castlewood Park Biome Overlay..."
-          # Artisan scripts would trigger here to build the scene
+          # Artisan build logic executes here
 
       - name: Return Universal Preview
         run: |
-          # Replace 'your-worker-name.subdomain.workers.dev' with your actual Worker URL
-          curl -X POST https://your-worker-name.subdomain.workers.dev \
+          curl -X POST "https://veilbound-artisan-webhook.veilboundgame.workers.dev" \
           -H "Content-Type: application/json" \
+          -H "User-Agent: XULPLAB-Artisan-Render" \
           -d '{
-            "image_url": "https://raw.githubusercontent.com/${{ github.repository }}/main/assets/previews/castlewood_nexus.png", 
+            "image_url": "https://raw.githubusercontent.com/XULPLAB/VeilboundGame/main/assets/previews/castlewood_nexus.png", 
             "message": "PREVIEW: ${{ github.event.client_payload.commander_directive }}"
           }'
