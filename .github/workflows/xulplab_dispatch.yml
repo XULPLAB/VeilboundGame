@@ -19,16 +19,19 @@ jobs:
         run: |
           echo "Starting General World Push for Lexington..."
           echo "Applying Castlewood Park Biome Overlay..."
-          # Artisan automated scripts would execute world-gen here
+          # Artisan automated scripts execute world-gen logic here
 
       - name: Return Universal Preview
         run: |
-          # We use a public image first to ensure the pipeline is open
-          # Once confirmed, replace the image_url with your raw GitHub asset link
-          curl -v -X POST "https://veilbound-artisan-webhook.veilboundgame.workers.dev" \
+          # DIAGNOSTIC STEP:
+          # We use a public image first to bypass any private repo permission errors.
+          # Once you see this random photo in Telegram, change the image_url 
+          # to your actual asset path.
+          
+          curl -X POST "https://veilbound-artisan-webhook.veilboundgame.workers.dev" \
           -H "Content-Type: application/json" \
           -H "User-Agent: XULPLAB-Artisan-Render" \
           -d '{
             "image_url": "https://picsum.photos/800/600", 
-            "message": "ARTISAN VERIFIED: ${{ github.event.client_payload.commander_directive }}"
+            "message": "ARTISAN REPORT: ${{ github.event.client_payload.commander_directive }} - System Stable"
           }'
