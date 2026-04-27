@@ -1,37 +1,54 @@
-name: XULPLAB World Fade
-on:
-  repository_dispatch:
-    types: [world_gen_deploy, telegram_cmd]
+export default {
+  async fetch(request, env) {
+    const userAgent = request.headers.get("User-Agent") || "";
 
-jobs:
-  execute_fade:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    // 1. DISPATCH FROM TELEGRAM (You -> GitHub)
+    if (userAgent.includes("Telegram")) {
+      const body = await request.json();
+      const text = body.message?.text || "";
 
-      - name: Log Commander Directive
-        run: |
-          echo "Commander Sign-off: ${{ github.event.client_payload.commander_directive }}"
-          echo "Targeting: Lexington Castlewood Nexus"
+      if (text.startsWith("Force Preview:")) {
+        const directive = text.split(":")[1]?.trim() || "Nexus";
+        
+        const ghReq = await fetch(`https://api.github.com/repos/XULPLAB/VeilboundGame/dispatches`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${env.GH_PAT}`,
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "XULPLAB-Commander",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            event_type: "world_gen_deploy",
+            client_payload: { commander_directive: directive }
+          })
+        });
 
-      - name: Deploy World Skin
-        run: |
-          echo "Starting General World Push for Lexington..."
-          echo "Applying Castlewood Park Biome Overlay..."
-          # Artisan automated scripts execute world-gen logic here
+        return new Response(JSON.stringify({
+          method: "sendMessage",
+          chat_id: env.COMMANDER_CHAT_ID,
+          text: `📡 BRIDGE ONLINE: GH_${ghReq.status}\nDirective: ${directive}`
+        }), { headers: { "Content-Type": "application/json" } });
+      }
+    }
 
-      - name: Return Universal Preview
-        run: |
-          # DIAGNOSTIC STEP:
-          # We use a public image first to bypass any private repo permission errors.
-          # Once you see this random photo in Telegram, change the image_url 
-          # to your actual asset path.
-          
-          curl -X POST "https://veilbound-artisan-webhook.veilboundgame.workers.dev" \
-          -H "Content-Type: application/json" \
-          -H "User-Agent: XULPLAB-Artisan-Render" \
-          -d '{
-            "image_url": "https://picsum.photos/800/600", 
-            "message": "ARTISAN REPORT: ${{ github.event.client_payload.commander_directive }} - System Stable"
-          }'
+    // 2. RETURN FROM GITHUB (GitHub -> You)
+    if (userAgent.includes("Artisan")) {
+      const data = await request.json();
+      if (data.image_url) {
+        await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/sendPhoto`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: env.COMMANDER_CHAT_ID,
+            photo: data.image_url,
+            caption: `🔱 ARTISAN: ${data.message}`
+          })
+        });
+      }
+      return new Response("OK", { status: 200 });
+    }
+
+    return new Response("GATEWAY_READY", { status: 200 });
+  }
+};
