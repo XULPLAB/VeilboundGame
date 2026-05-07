@@ -1,4 +1,0 @@
-# VeilboundGame
-
-Initial repository setup.
-

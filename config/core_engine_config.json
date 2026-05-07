@@ -1,0 +1,34 @@
+{
+    "identity": {
+        "title": "Veilbound: Daybreak",
+        "commander": "Commander",
+        "parent_company": "XULPLABS"
+    },
+    "geospatial": {
+        "mapping": "1:1 Lexington S2 Cell Grid",
+        "movement": "Astral Joystick (1km range)",
+        "energy_source": "Marketplace Consumption",
+        "security": "Hard-locked Speed Cap & Teleport Ban"
+    },
+    "visuals": {
+        "profile": "Aetheric Daybreak",
+        "aesthetic": "High-visibility / Vibrant Fantasy",
+        "lighting": "Atmospheric Sync (Lexington Weather/Time)",
+        "optimization": "Mobile Battery Efficiency (30 FPS)"
+    },
+    "mechanics": {
+        "capture": "Flick-to-Capture (Skill-based Accuracy)",
+        "vessels": ["Standard Prism", "Great Prism", "Ultra Prism"],
+        "nodes": "Crystal Spires (Mini-Tower Battle/Capture Loop)",
+        "quest_system": "Daily Sigils",
+        "ui": "The Floating Grimoire (Endless Satchel / Quests)"
+    },
+    "marketplace": {
+        "currency": "Aether Crowns",
+        "inventory": {
+            "prisms": ["Cyan", "Gold", "Purple"],
+            "berries": ["Rift-Rasp", "Quiet-Core", "Echo-Shard", "Royal Zenith", "Silver Glint", "Void-Thorn"],
+            "utility": ["Extra Joystick Energy", "Aether Incense", "Remote Rift Pass", "Star-Map Scroll", "Revive & Spritz"]
+        }
+    }
+}

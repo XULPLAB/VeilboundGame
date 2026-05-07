@@ -1,0 +1,28 @@
+{
+    "game_title": "Veilbound: Daybreak",
+    "parent_company": "XULPLABS",
+    "commander": "Commander",
+    "features": {
+        "geospatial": {
+            "mapping": "1:1 Lexington S2 Cell Grid",
+            "active_location": "Lexington, KY",
+            "joystick_movement": "Enabled (Home-base movement with shop energy)"
+        },
+        "aesthetic": {
+            "profile": "Aetheric Daybreak",
+            "style": "High-visibility / Pokémon GO inspired",
+            "lighting": "Real-time Atmospheric Sync (Weather & Time of Day)",
+            "forbidden": "Photorealism / Dark-mode / Neon"
+        },
+        "mechanics": {
+            "capture_system": "Flick-to-Capture (Skill-based / No level math)",
+            "creature_slots": 21,
+            "monsters_and_waystops": "Brainstormed towers & waystops initialized"
+        },
+        "performance": {
+            "target": "Mobile Battery Efficiency",
+            "fps_limit": 30,
+            "engine": "Godot Asset Pipeline Ready"
+        }
+    }
+}

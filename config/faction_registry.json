@@ -1,0 +1,9 @@
+{
+    "factions": {
+        "Team Solar": { "color": "Deep Gold", "symbol": "Sun-Dial", "trim": "Radiant Silk" },
+        "Team Lunar": { "color": "Silver-Blue", "symbol": "Crescent Moon", "trim": "Shimmering constellation" },
+        "Team Void": { "color": "Dark Violet", "symbol": "Aetheric Mist", "trim": "Shifting Void-field" },
+        "Team Storm": { "color": "Electric Cyan", "symbol": "Static Spark", "trim": "Pulsing lightning" }
+    },
+    "initiate_gear": "True Black Tunic + Pointy Hat"
+}
