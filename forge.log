@@ -47,3 +47,10 @@ To https://github.com/XULPLAB/VeilboundGame
    f971118..a7b65e2  main -> main
 /workspaces/VeilboundGame/sovereign_listener.py:18: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
   datas = img.getdata()
+[main a83ef16] Artisan: Alpha-Transparent water pushed
+ 2 files changed, 7 insertions(+)
+ create mode 100644 assets/creatures/kith/water/v_water_transparent.png
+To https://github.com/XULPLAB/VeilboundGame
+   a7b65e2..a83ef16  main -> main
+/workspaces/VeilboundGame/sovereign_listener.py:18: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  datas = img.getdata()
