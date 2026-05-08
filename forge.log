@@ -25,3 +25,11 @@ To https://github.com/XULPLAB/VeilboundGame
  create mode 100644 assets/creatures/kith/fire/v_1778216740_fire.png
 To https://github.com/XULPLAB/VeilboundGame
    c5b6002..69ab485  main -> main
+[main 0115b6a] Artisan: Native Push for water
+ 2 files changed, 5 insertions(+)
+ create mode 100644 assets/creatures/kith/water/v_1778216742_water.png
+To https://github.com/XULPLAB/VeilboundGame
+   69ab485..0115b6a  main -> main
+nohup: ignoring input
+/workspaces/VeilboundGame/sovereign_listener.py:18: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  datas = img.getdata()
