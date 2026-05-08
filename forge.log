@@ -33,3 +33,10 @@ To https://github.com/XULPLAB/VeilboundGame
 nohup: ignoring input
 /workspaces/VeilboundGame/sovereign_listener.py:18: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
   datas = img.getdata()
+[main f971118] Artisan: Alpha-Transparent normal pushed
+ 3 files changed, 61 insertions(+), 38 deletions(-)
+ create mode 100644 assets/creatures/kith/normal/v_normal_transparent.png
+To https://github.com/XULPLAB/VeilboundGame
+   0115b6a..f971118  main -> main
+/workspaces/VeilboundGame/sovereign_listener.py:18: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  datas = img.getdata()
