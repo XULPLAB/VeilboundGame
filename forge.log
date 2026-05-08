@@ -14,3 +14,9 @@ nohup: ignoring input
 nohup: ignoring input
 nohup: ignoring input
 nohup: ignoring input
+[main c5b6002] Artisan: Native Push for normal
+ 5 files changed, 61 insertions(+), 21 deletions(-)
+ rename assets/{kith => creatures/kith/normal}/kith_master_1778214161.png (100%)
+ create mode 100644 assets/creatures/kith/normal/v_1778216738_normal.png
+To https://github.com/XULPLAB/VeilboundGame
+   284fe71..c5b6002  main -> main
